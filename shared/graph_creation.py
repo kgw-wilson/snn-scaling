@@ -47,18 +47,8 @@ def create_weighted_er_graph(config: ERGraphConfig) -> torch.Tensor:
        to existing edges via a mask.
 
     Parameters:
-        seed - int
-            Random seed for reproducibility.
-        N - int
-            Number of neurons (matrix is N x N).
-        p - float
-            Connection probability (0 < p <= 1).
-        g - float
-            Global coupling strength scaling factor.
-        device - Optional[torch.device | str]
-            Device on which to allocate tensor ("cpu" or "cuda")
-        dtype - Optional[torch.dtype]
-            Tensor data type
+        config - ERGraphConfig
+            Instance of dataclass containing validated graph properties
 
     Returns:
         torch.Tensor

@@ -9,11 +9,22 @@ class ERGraphConfig:
     All values are validated after initialization.
     """
 
+    # Random seed for random number generation for reproducibility
     seed: int
+
+    # Number of neurons in the graph
     N: int
+
+    # Probability of connection between two random neurons
     p: float
+
+    # Global coupling strength scaling factor.
     g: float
+
+    # Which device to use when allocating memory during graph creation
     device: torch.device
+
+    # Datatype of weight matrix (torch.Tensor) after graph creation
     dtype: torch.dtype = torch.float32
 
     def __post_init__(self):
