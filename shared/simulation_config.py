@@ -52,6 +52,12 @@ class ERGraphConfig:
                 ):
                     raise ValueError(f"CUDA device {self.device.index} not found")
 
+            elif self.device.type == "mps":
+                if not torch.backends.mps.is_available():
+                    raise ValueError("MPS is not available on this system")
+                if not torch.backends.mps.is_built():
+                    raise ValueError("PyTorch was not built with MPS support")
+
         if not isinstance(self.dtype, torch.dtype):
             raise TypeError(f"dtype must be a torch.dtype, got {type(self.dtype)}")
 
