@@ -73,21 +73,3 @@ The long-term objective is to characterize how graph structure, sparsity, and sp
 ## Status
 
 Early-stage development, beginning with dense PyTorch baselines.
-
-## Environment Notes (Work in Progress)
-
-python 3.11.2 is used because it the default on Ubuntu 22.04 machines through Google Cloud Compute Instance.
-
-Environment setup after ssh'ing into machine:
-
-```shell
-sudo apt update
-sudo apt install -y \
-    build-essential \
-    git \
-    curl \
-    wget \
-    htop \
-    tmux \
-    unzip
-```
