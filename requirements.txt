@@ -5,7 +5,10 @@ MarkupSafe==3.0.3
 mpmath==1.3.0
 networkx==3.6.1
 numpy==2.4.2
+nvidia-ml-py==13.590.48
 pillow==12.1.1
+psutil==7.2.2
+pyRAPL==0.2.3.1
 sympy==1.14.0
 torch==2.10.0
 torchvision==0.25.0
