@@ -1,8 +1,8 @@
 import math
 import torch
-from zeus_apple_silicon import AppleEnergyMonitor
 
 from shared.graph_creation import create_er_dense
+from shared.monitoring import MonitoringWindow
 from shared.simulation_config import ERGraphConfig, SNNConfig
 
 
@@ -23,11 +23,7 @@ def run_simulation_dense(graph_config: ERGraphConfig, snn_config: SNNConfig) -> 
     Synaptic current decays exponentially and is incremented by recurrent
     spikes via weights @ spikes.
 
-    Recording and weight updates are not done, since the function is purely
-    for runtime benchmarking.
-
-    Measures runtime, peak memory usage, and approximate energy consumed for
-    the main simulation loop.
+    Recording and weight updates are not done.
     """
 
     # Precompute constants to avoid work within the loop
@@ -49,30 +45,28 @@ def run_simulation_dense(graph_config: ERGraphConfig, snn_config: SNNConfig) -> 
         graph_config.num_neurons, device=graph_config.device, dtype=dtype
     )
 
-    monitor = AppleEnergyMonitor()
-    monitor.begin_window("simulation main loop")
+    with MonitoringWindow("simulation main loop"):
 
-    for _ in range(snn_config.num_timesteps):
+        for _ in range(snn_config.num_timesteps):
 
-        membrane_voltages += (-membrane_voltages + synaptic_currents) * membrane_decay
-        binary_spikes = membrane_voltages >= snn_config.threshold_voltage
-        membrane_voltages[binary_spikes] = snn_config.resting_voltage
-        synaptic_currents = (
-            synaptic_currents * synaptic_decay + weights @ binary_spikes.to(dtype)
-        )
-
-    mes = monitor.end_window("simulation main loop")
-    print(mes)
+            membrane_voltages += (
+                -membrane_voltages + synaptic_currents
+            ) * membrane_decay
+            binary_spikes = membrane_voltages >= snn_config.threshold_voltage
+            membrane_voltages[binary_spikes] = snn_config.resting_voltage
+            synaptic_currents = (
+                synaptic_currents * synaptic_decay + weights @ binary_spikes.to(dtype)
+            )
 
 
 if __name__ == "__main__":
 
     graph_config = ERGraphConfig(
         seed=42,
-        num_neurons=10000,
+        num_neurons=1000,
         connection_prob=0.1,
         global_coupling_strength=0.1,
-        device=torch.device("mps"),  # torch.device("cpu"),
+        device=torch.device("cpu"),
         dtype=torch.float32,
     )
 
@@ -84,5 +78,7 @@ if __name__ == "__main__":
         resting_voltage=-70.0,
         threshold_voltage=-50.0,
     )
+
+    torch.manual_seed(graph_config.seed)
 
     run_simulation_dense(graph_config, snn_config)

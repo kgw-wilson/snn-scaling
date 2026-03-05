@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+import numpy as np
 import torch
 
 
@@ -11,7 +12,7 @@ class ERGraphConfig:
     connection_prob: float
     global_coupling_strength: float
     device: torch.device
-    dtype: torch.dtype
+    dtype: torch.dtype | np.dtype
 
     def __post_init__(self):
         """Validate values after instantiation"""
@@ -58,8 +59,8 @@ class ERGraphConfig:
                 if not torch.backends.mps.is_built():
                     raise ValueError("PyTorch was not built with MPS support")
 
-        if not isinstance(self.dtype, torch.dtype):
-            raise TypeError(f"dtype must be a torch.dtype, got {type(self.dtype)}")
+        if not isinstance(self.dtype, (torch.dtype, np.dtype)):
+            raise TypeError(f"dtype must be torch.dtype or np.dtype, got {self.dtype}")
 
 
 @dataclass
@@ -67,7 +68,7 @@ class SNNConfig:
     """
     Spiking Neural Network configuration
 
-    All time-related constants are in seconds. All volate variables
+    Time-related constants are in seconds. Voltage variables
     are in millivolts.
     """
 
