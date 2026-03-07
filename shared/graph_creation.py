@@ -2,12 +2,13 @@ from __future__ import annotations
 
 import math
 import numpy as np
+import numpy.typing as npt
 from scipy.sparse import csr_matrix
 import torch
 from shared.simulation_config import ERGraphConfig
 
 
-def create_er_dense(config: ERGraphConfig) -> torch.Tensor:
+def create_er_dense(config: ERGraphConfig, dtype: torch.dtype) -> torch.Tensor:
     """
     Create a dense weighted Erdos-Renyi connectivity matrix
 
@@ -32,14 +33,10 @@ def create_er_dense(config: ERGraphConfig) -> torch.Tensor:
             Dense weight matrix of shape N x N on specified device
     """
 
-    if not isinstance(config.dtype, torch.dtype):
-        raise ValueError(
-            f"This function only supports PyTorch datatypes, got {config.dtype=}"
-        )
 
     weights = torch.randn(
         (config.num_neurons, config.num_neurons),
-        dtype=config.dtype,
+        dtype=dtype,
         device=config.device,
     )
 
@@ -121,7 +118,7 @@ def create_er_sparse_gpu(config: ERGraphConfig) -> torch.Tensor:
     return weights.coalesce().to_sparse_csr()
 
 
-def create_er_sparse_cpu(config: ERGraphConfig) -> csr_matrix:
+def create_er_sparse_cpu(config: ERGraphConfig, dtype: npt.DTypeLike) -> csr_matrix:
     """
     Create a sparse weighted Erdos-Renyi connectivity matrix
 
@@ -139,11 +136,6 @@ def create_er_sparse_cpu(config: ERGraphConfig) -> csr_matrix:
             f"This function only supports cpu device, got {config.device=}"
         )
 
-    if not isinstance(config.dtype, np.dtype):
-        raise ValueError(
-            f"This function only supports numpy datatypes, got {config.dtype=}"
-        )
-
     N = config.num_neurons
     p = config.connection_prob
 
@@ -155,8 +147,8 @@ def create_er_sparse_cpu(config: ERGraphConfig) -> csr_matrix:
     values = np.random.randn(expected_edges)
     values *= _weight_scalar(config)
 
-    row_sums = np.zeros(N, dtype=np.float32)
-    row_counts = np.zeros(N, dtype=np.float32)
+    row_sums = np.zeros(N, dtype=dtype)
+    row_counts = np.zeros(N, dtype=dtype)
 
     np.add.at(row_sums, row_indices, values)
     np.add.at(row_counts, row_indices, 1)
@@ -167,7 +159,7 @@ def create_er_sparse_cpu(config: ERGraphConfig) -> csr_matrix:
     values -= row_means[row_indices]
 
     weights_csr = csr_matrix(
-        (values, (row_indices, col_indices)), shape=(N, N), dtype=config.dtype
+        (values, (row_indices, col_indices)), shape=(N, N), dtype=dtype
     )
     return weights_csr
 
