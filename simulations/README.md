@@ -1,6 +1,6 @@
 # Simulations
 
-These implementations are designed for benchmarking CPU vs GPU performance for simulating a spiking neural network with dense vs sparse operations under controlled scaling conditions. Activity is driven by external Poisson input and recurrent connectivity. The function uses current-based LIF neurons with no conductances and no refractory periods. The model is minimal to isolate scaling behavior from biological complexity. Recording and weight updates are not done.
+These implementations are designed for benchmarking CPU vs GPU performance for simulating a spiking neural networks with event-driven and clock-driven implementations with dense vs sparse operations under controlled scaling conditions. Activity is driven by external Poisson input and recurrent connectivity. The function uses current-based LIF neurons with no conductances and no refractory periods. The model is minimal to isolate scaling behavior from biological complexity. Recording and weight updates are not done.
 
 Updates to membrane voltages take this form:
 
