@@ -2,15 +2,19 @@ import numpy as np
 import torch
 
 from shared.simulation_config import ERGraphConfig, SNNConfig
-from shared.parameter_sweeps import CONNECTION_PROBS, NUM_NEURONS
 from simulations.clock_driven.dense import run_simulation_dense
 from simulations.clock_driven.sparse_cpu import run_simulation_sparse_cpu
 from simulations.clock_driven.sparse_gpu import run_simulation_sparse_gpu
+from simulations.event_driven.cpu import run_simulation_event_driven
+
+
+_CONNECTION_PROBS = [0.1]
+_NUM_NEURONS = [1000]
 
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
-    torch.device("cpu"): [run_simulation_dense, run_simulation_sparse_cpu],
+    torch.device("cpu"): [run_simulation_dense, run_simulation_sparse_cpu, run_simulation_event_driven],
     torch.device("cuda"): [run_simulation_dense, run_simulation_sparse_gpu],
     torch.device("mps"): [run_simulation_dense],
 }
@@ -42,9 +46,9 @@ if __name__ == "__main__":
 
         for simulation in _DEVICE_TO_SIMULATIONS[device]:
 
-            for num_neurons in NUM_NEURONS:
+            for num_neurons in _NUM_NEURONS:
 
-                for connection_prob in CONNECTION_PROBS:
+                for connection_prob in _CONNECTION_PROBS:
 
                     print("===================")
                     print(
