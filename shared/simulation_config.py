@@ -3,6 +3,7 @@ import math
 import numpy as np
 import torch
 
+
 @dataclass
 class ERGraphConfig:
     """Configuration for Erdos-Renyi graphs"""
@@ -54,6 +55,7 @@ class ERGraphConfig:
                 if not torch.backends.mps.is_built():
                     raise ValueError("PyTorch was not built with MPS support")
 
+
 @dataclass
 class SNNConfig:
     """
@@ -85,10 +87,20 @@ class SNNConfig:
 
     @property
     def membrane_decay(self):
+        """
+        Calculate membrane voltage decay factor based on timestep and membrane time constant
+
+        Assumes a fixed timestep, which is not the case for event-driven simulations.
+        """
         return math.exp(-self.timestep / self.membrane_time_constant)
 
     @property
     def synaptic_decay(self):
+        """
+        Calculate synaptic current decay factor based on timestep and synaptic time constant
+
+        Assumes a fixed timestep, which is not the case for event-driven simulations.
+        """
         return math.exp(-self.timestep / self.synaptic_time_constant)
 
     @property
