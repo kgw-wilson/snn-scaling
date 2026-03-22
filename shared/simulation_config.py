@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 import math
-import numpy as np
 import torch
 
 
@@ -12,6 +11,7 @@ class ERGraphConfig:
     connection_prob: float
     global_coupling_strength: float
     device: torch.device
+    dtype: torch.dtype
 
     def __post_init__(self):
         """Validate values after instantiation"""
@@ -55,6 +55,9 @@ class ERGraphConfig:
                 if not torch.backends.mps.is_built():
                     raise ValueError("PyTorch was not built with MPS support")
 
+        if not isinstance(self.dtype, torch.dtype):
+            raise ValueError(f"dtype must be a torch.dtype, got {type(self.dtype)}")
+
 
 @dataclass
 class SNNConfig:
@@ -72,14 +75,15 @@ class SNNConfig:
     should be << 1 for accuracy.
     """
 
-    timestep: float | None
+    timestep: float
     simulation_time: float
     membrane_time_constant: float
     synaptic_time_constant: float
     resting_voltage: float
     threshold_voltage: float
     poisson_rate: float
-    poisson_weight: float
+    bin_rate: float
+    delay: float
 
     @property
     def num_timesteps(self) -> int:
@@ -106,6 +110,10 @@ class SNNConfig:
     @property
     def poisson_prob(self) -> float:
         return self.poisson_rate * self.timestep
+
+    @property
+    def num_bins(self) -> int:
+        return math.ceil(self.simulation_time / self.bin_rate)
 
     def __post_init__(self):
         """Validate values after instantiation."""
@@ -158,22 +166,9 @@ class SNNConfig:
         if self.threshold_voltage <= self.resting_voltage:
             raise ValueError("threshold voltage must be greater than resting voltage")
 
-        if not isinstance(self.poisson_rate, float):
+        if not isinstance(self.poisson_rate, float) or self.poisson_rate <= 0:
             raise TypeError(
-                f"poisson_rate must be float, got {type(self.poisson_rate)}"
-            )
-
-        if self.poisson_rate <= 0:
-            raise ValueError(f"poisson_rate must be positive, got {self.poisson_rate}")
-
-        if not isinstance(self.poisson_weight, float):
-            raise TypeError(
-                f"poisson_weight must be float, got {type(self.poisson_weight)}"
-            )
-
-        if self.poisson_weight <= 0:
-            raise ValueError(
-                f"poisson_weight must be positive, got {self.poisson_weight}"
+                f"poisson_rate must be positive float, got {self.poisson_rate}"
             )
 
         if self.poisson_prob >= 1 or self.poisson_prob > 0.1:
@@ -182,3 +177,15 @@ class SNNConfig:
                 f"Got poisson_prob={self.poisson_prob:.4f}. "
                 "Decrease timestep or poisson_rate."
             )
+
+        if not isinstance(self.bin_rate, float) or self.bin_rate <= 0:
+            raise ValueError(f"bin_rate must be a positive float, got {self.bin_rate}")
+
+        if self.bin_rate > self.simulation_time:
+            raise ValueError("bin_rate cannot be greater than total simulation time")
+
+        if self.bin_rate < self.timestep:
+            raise ValueError("bin_rate must be greater than timestep")
+
+        if not isinstance(self.delay, float) or self.delay <= 0:
+            raise ValueError(f"delay must be a positive float, got {self.bin_rate}")

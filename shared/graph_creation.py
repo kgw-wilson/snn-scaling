@@ -1,14 +1,11 @@
-from __future__ import annotations
-
 import math
-import numpy as np
-import numpy.typing as npt
+from typing import Union
 from scipy.sparse import csr_matrix
 import torch
 from shared.simulation_config import ERGraphConfig
 
 
-def create_er_dense(config: ERGraphConfig, dtype: torch.dtype) -> torch.Tensor:
+def create_er_dense(config: ERGraphConfig) -> torch.Tensor:
     """
     Create a dense weighted Erdos-Renyi connectivity matrix
 
@@ -33,10 +30,9 @@ def create_er_dense(config: ERGraphConfig, dtype: torch.dtype) -> torch.Tensor:
             Dense weight matrix of shape N x N on specified device
     """
 
-
     weights = torch.randn(
         (config.num_neurons, config.num_neurons),
-        dtype=dtype,
+        dtype=config.dtype,
         device=config.device,
     )
 
@@ -57,32 +53,29 @@ def create_er_dense(config: ERGraphConfig, dtype: torch.dtype) -> torch.Tensor:
     return weights
 
 
-def create_er_sparse_gpu(config: ERGraphConfig) -> torch.Tensor:
+def create_er_sparse(
+    config: ERGraphConfig, use_numpy: bool
+) -> Union[torch.Tensor, csr_matrix]:
     """
     Create a sparse weighted Erdos-Renyi connectivity matrix
 
-    This function is used when running a simulation with cuda,
-    since MPS does not support sparse matrix operations as of
-    03/2026. It follows the same logic (i.e. random weight sampling
-    and then scaling followed by mean subtraction) as the function above.
+    This generates a sparse weight matrix in PyTorch using the same
+    random sampling and scaling logic as the create_er_dense function.
+
+    Callers of this function should set use_numpy to False if running
+    a simulation with a CUDA backend. Callers should set use_numpy to
+    True if running on CPU or MPS. This is because PyTorch's sparse support
+    on CPU and MPS is currently inefficient or nonexistent, respectively
+    (as of 03/2026).
 
     The weight tensor is created as coo first because of its
     more human-friendly format and then converted to csr for
     faster computation.
 
     Returns:
-        torch.Tensor - sparse csr tensor of shape (N, N)
+        torch.Tensor - sparse csr tensor of shape (N, N) if use_numpy is False
+        csr_matrix - sparse csr matrix of shape (N, N) if use_numpy is True
     """
-
-    if config.device.type != torch.device("cuda"):
-        raise ValueError(
-            f"This function only supports cuda device, got {config.device=}"
-        )
-
-    if not isinstance(config.dtype, torch.dtype):
-        raise ValueError(
-            f"This function only supports PyTorch datatypes, got {config.dtype=}"
-        )
 
     N = config.num_neurons
     p = config.connection_prob
@@ -107,60 +100,21 @@ def create_er_sparse_gpu(config: ERGraphConfig) -> torch.Tensor:
     values -= row_means[row_indices]
 
     indices = torch.stack([row_indices, col_indices])
-    weights = torch.sparse_coo_tensor(
+    weights_coo = torch.sparse_coo_tensor(
         indices,
         values,
         size=(N, N),
         device=config.device,
         dtype=config.dtype,
     )
+    weights_csr = weights_coo.coalesce().to_sparse_csr()
 
-    return weights.coalesce().to_sparse_csr()
+    if use_numpy:
+        row_ind = weights_csr.crow_indices().numpy()
+        col_ind = weights_csr.col_indices().numpy()
+        data = weights_csr.values().numpy()
+        return csr_matrix((data, col_ind, row_ind), shape=(N, N))
 
-
-def create_er_sparse_cpu(config: ERGraphConfig, dtype: npt.DTypeLike) -> csr_matrix:
-    """
-    Create a sparse weighted Erdos-Renyi connectivity matrix
-
-    This function follows the same logic as the function above
-    but uses numpy and scipy instead of PyTorch because as of 03/2026
-    PyTorch support for sparse operations on the CPU is limited
-    and basic trials showed scipy producing results much faster.
-
-    Returns:
-        csr_matrix: compressed sparse row matrix of shape (N, N)
-    """
-
-    if config.device != torch.device("cpu"):
-        raise ValueError(
-            f"This function only supports cpu device, got {config.device=}"
-        )
-
-    N = config.num_neurons
-    p = config.connection_prob
-
-    expected_edges = int(N * N * p)
-
-    row_indices = np.random.randint(0, N, size=expected_edges)
-    col_indices = np.random.randint(0, N, size=expected_edges)
-
-    values = np.random.randn(expected_edges)
-    values *= _weight_scalar(config)
-
-    row_sums = np.zeros(N, dtype=dtype)
-    row_counts = np.zeros(N, dtype=dtype)
-
-    np.add.at(row_sums, row_indices, values)
-    np.add.at(row_counts, row_indices, 1)
-
-    row_counts = np.maximum(row_counts, 1)
-    row_means = row_sums / row_counts
-
-    values -= row_means[row_indices]
-
-    weights_csr = csr_matrix(
-        (values, (row_indices, col_indices)), shape=(N, N), dtype=dtype
-    )
     return weights_csr
 
 
