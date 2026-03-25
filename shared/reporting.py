@@ -1,6 +1,7 @@
 from typing import Union
 import numpy as np
 import torch
+from shared.simulation_config import ERGraphConfig, SNNConfig
 
 
 def report_spike_statistics(
@@ -41,3 +42,32 @@ def report_spike_statistics(
     print(f"Min spikes by a neuron: {min_spikes_neuron}")
     print(f"Max spikes in a bin: {max_spikes_bin}")
     print(f"Min spikes in a bin: {min_spikes_bin}")
+
+
+def create_spike_reporting_tensors(
+    graph_config: ERGraphConfig, snn_config: SNNConfig
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Initialize tensors used for spike-count statistics during simulation
+
+    Assumes consumers of the function will bin indices when updating
+    spikes_per_bin. No normalization is applied, values represent raw
+    spike counts.
+
+    Returns:
+        spikes_per_neuron - [num_neurons] tracking total spike count per neuron
+            over the full simulation duration
+
+        spikes_per_bin - [num_bins] tracking aggregated spike activity over
+            coarse time bins (useful for population firing rate analysis)
+    """
+
+    num_neurons = graph_config.num_neurons
+    device = graph_config.device
+    dtype = graph_config.dtype
+    num_bins = snn_config.num_bins
+
+    spikes_per_neuron = torch.zeros(num_neurons, device=device, dtype=dtype)
+    spikes_per_bin = torch.zeros(num_bins, device=device, dtype=dtype)
+
+    return spikes_per_neuron, spikes_per_bin

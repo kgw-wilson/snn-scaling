@@ -26,8 +26,7 @@ def create_er_dense(config: ERGraphConfig) -> torch.Tensor:
     to existing edges via a mask.
 
     Returns:
-        torch.Tensor
-            Dense weight matrix of shape N x N on specified device
+        torch.Tensor - dense weight matrix of shape N x N on specified device
     """
 
     weights = torch.randn(
@@ -74,6 +73,7 @@ def create_er_sparse(
 
     Returns:
         torch.Tensor - sparse csr tensor of shape (N, N) if use_numpy is False
+
         csr_matrix - sparse csr matrix of shape (N, N) if use_numpy is True
     """
 
