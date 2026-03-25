@@ -30,7 +30,7 @@ class ERGraphConfig:
             )
 
         if (
-            not isinstance(self.global_coupling_strength, (float, int))
+            not isinstance(self.global_coupling_strength, float)
             or self.global_coupling_strength <= 0
         ):
             raise ValueError(
@@ -83,7 +83,9 @@ class SNNConfig:
     threshold_voltage: float
     poisson_rate: float
     bin_rate: float
-    delay: float
+    min_delay: float
+    max_delay: float
+    refractory_period: float
 
     @property
     def num_timesteps(self) -> int:
@@ -94,7 +96,8 @@ class SNNConfig:
         """
         Calculate membrane voltage decay factor based on timestep and membrane time constant
 
-        Assumes a fixed timestep, which is not the case for event-driven simulations.
+        Assumes every neuron is updated at each fixed timestep, which is not the case
+        for event-driven simulations.
         """
         return math.exp(-self.timestep / self.membrane_time_constant)
 
@@ -103,7 +106,8 @@ class SNNConfig:
         """
         Calculate synaptic current decay factor based on timestep and synaptic time constant
 
-        Assumes a fixed timestep, which is not the case for event-driven simulations.
+        Assumes every neuron is updated at each fixed timestep, which is not the case
+        for event-driven simulations.
         """
         return math.exp(-self.timestep / self.synaptic_time_constant)
 
@@ -187,5 +191,30 @@ class SNNConfig:
         if self.bin_rate < self.timestep:
             raise ValueError("bin_rate must be greater than timestep")
 
-        if not isinstance(self.delay, float) or self.delay <= 0:
-            raise ValueError(f"delay must be a positive float, got {self.bin_rate}")
+        if not isinstance(self.min_delay, float) or self.min_delay < 0:
+            raise ValueError(
+                f"min_delay must be a non-negative float, got {self.min_delay}"
+            )
+
+        if not isinstance(self.max_delay, float) or self.max_delay < 0:
+            raise ValueError(
+                f"max_delay must be a non-negative float, got {self.max_delay}"
+            )
+
+        if self.min_delay < self.timestep:
+            print(
+                "Warning: min_delay cannot be less than timestep in clock-driven simulations."
+            )
+
+        if self.max_delay < self.min_delay:
+            raise ValueError("max_delay must be greater than or equal to min_delay.")
+
+        if not isinstance(self.refractory_period, float) or self.refractory_period < 0:
+            raise ValueError(
+                f"refractory_period must be a non-negative float, got {self.refractory_period}"
+            )
+
+        if self.refractory_period < self.timestep:
+            print(
+                "Warning: refractory_period has no meaning in clock-driven simulations when less than timestep."
+            )
