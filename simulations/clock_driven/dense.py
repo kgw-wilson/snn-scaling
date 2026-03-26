@@ -64,20 +64,19 @@ def run_simulation_dense(graph_config: ERGraphConfig, snn_config: SNNConfig) -> 
             # spike generation
             can_spike_mask = current_time - last_spike_times >= refractory_period
             recurrent_spikes = membrane_voltages >= threshold_voltage
-            is_spiking_mask = (poisson_spikes[t] | recurrent_spikes) & can_spike_mask
-            spike_vector = is_spiking_mask.to(dtype)
+            spikes = (poisson_spikes[t] | recurrent_spikes) & can_spike_mask
 
             # propagation (schedule future current in buffer)
             bucket_indices_in_buffer = (buffer_idx + bucket_offsets) % buffer_size
-            ring_buffer[bucket_indices_in_buffer] += bucketized_weights @ spike_vector
+            ring_buffer[bucket_indices_in_buffer] += bucketized_weights @ spikes.to(dtype)
 
             # variable resets
             ring_buffer[buffer_idx].zero_()
-            last_spike_times[is_spiking_mask] = current_time
-            membrane_voltages[is_spiking_mask] = resting_voltage
+            last_spike_times[spikes] = current_time
+            membrane_voltages[spikes] = resting_voltage
 
             # reporting
-            spikes_per_neuron += spike_vector
-            spikes_per_bin[int(current_time // bin_rate)] += spike_vector.sum()
+            spikes_per_neuron += spikes
+            spikes_per_bin[int(current_time // bin_rate)] += spikes.sum()
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)

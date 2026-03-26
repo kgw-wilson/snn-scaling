@@ -5,7 +5,6 @@ from shared.simulation_config import ERGraphConfig, SNNConfig
 from simulations.clock_driven.dense import run_simulation_dense
 from simulations.clock_driven.sparse_cpu import run_simulation_sparse_cpu
 from simulations.clock_driven.sparse_gpu import run_simulation_sparse_gpu
-from simulations.event_driven.cpu import run_simulation_event_driven
 
 
 _CONNECTION_PROBS = [0.1]
@@ -14,7 +13,7 @@ _NUM_NEURONS = [1000]
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
-    torch.device("cpu"): [run_simulation_dense, run_simulation_sparse_cpu, run_simulation_event_driven],
+    torch.device("cpu"): [run_simulation_dense, run_simulation_sparse_cpu],
     torch.device("cuda"): [run_simulation_dense, run_simulation_sparse_gpu],
     torch.device("mps"): [run_simulation_dense],
 }
@@ -29,11 +28,11 @@ def _get_available_devices() -> list[torch.device]:
 
     available_devices = [torch.device("cpu")]
 
-    if torch.cuda.is_available():
-        available_devices.append(torch.device("cuda"))
+    # if torch.cuda.is_available():
+    # available_devices.append(torch.device("cuda"))
 
-    if torch.backends.mps.is_available():
-        available_devices.append(torch.device("mps"))
+    # if torch.backends.mps.is_available():
+    #     available_devices.append(torch.device("mps"))
 
     return available_devices
 
@@ -73,8 +72,9 @@ if __name__ == "__main__":
                     graph_config = ERGraphConfig(
                         num_neurons=num_neurons,
                         connection_prob=connection_prob,
-                        global_coupling_strength=0.1,
+                        global_coupling_strength=10.0,
                         device=device,
+                        dtype=torch.float32,
                     )
 
                     snn_config = SNNConfig(
@@ -82,10 +82,13 @@ if __name__ == "__main__":
                         simulation_time=1.0,
                         membrane_time_constant=20e-3,
                         synaptic_time_constant=5e-3,
-                        resting_voltage=-70.0,
-                        threshold_voltage=-50.0,
+                        resting_voltage=0.0,
+                        threshold_voltage=20.0,
                         poisson_rate=5.0,
-                        poisson_weight=50.0,
+                        bin_rate=1e-3,
+                        min_delay=0.1e-3,  # 2.1e-3,
+                        max_delay=0.4e-3,  # 4.3e-3,
+                        refractory_period=0.2e-3,
                     )
 
                     simulation(graph_config=graph_config, snn_config=snn_config)
