@@ -124,8 +124,6 @@ def create_ring_buffer(
 
     Returns:
         ring_buffer - tensor of shape [buffer_size, num_neurons]
-
-        buffer_size - number of discrete timesteps covered by the buffer
     """
 
     num_neurons = graph_config.num_neurons
@@ -143,7 +141,7 @@ def create_ring_buffer(
         dtype=dtype,
     )
 
-    return ring_buffer, buffer_size
+    return ring_buffer
 
 
 def create_state_variables(
@@ -178,15 +176,16 @@ def create_state_variables(
     return membrane_voltages, synaptic_currents, last_spike_times
 
 
-def allocate_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
+def create_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
     """
     Returns per-timestep spike tensors to avoid re-allocation in loop
 
     Random noise is allocated once here and should be populated in-place
     using .uniform_() and then used to generate the external spikes for a
     timestep by comparing to poisson_prob. spikes_float is allocated here
-    because it avoids allocating new tensors with spikes_bool.to(dtype)
-    within the simulation loop.
+    and should be updated with spikes_float[:] = spikes_bool because that
+    avoids allocating new tensors with spikes_bool.to(dtype) within the
+    simulation loop.
 
     Returns:
         random_noise - empty tensor [num_neurons] with dtype from graph_config
@@ -202,6 +201,35 @@ def allocate_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
     spikes_float = torch.empty(num_neurons, device=device, dtype=dtype)
 
     return random_noise, spikes_float
+
+
+def create_lookup_tensors(
+    graph_config: ERGraphConfig, snn_config: SNNConfig
+) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Tensors used to lookup timestep value or bin index based on timestep index
+
+    These tensors help speed up compiled PyTorch code compared to passing in
+    unique Python scalars for each timestep.
+
+    Returns:
+        timestep_values - tensor [num_timesteps] with dtype from graph_config
+
+        bin_indices - int tensor [num_timesteps]
+    """
+
+    dtype = graph_config.dtype
+    device = graph_config.device
+    num_timesteps = snn_config.num_timesteps
+    timestep = snn_config.timestep
+    timesteps_per_bin = snn_config.timesteps_per_bin
+
+    timestep_values = (
+        torch.arange(0, num_timesteps, device=device, dtype=dtype) * timestep
+    )
+    bin_indices = torch.arange(0, num_timesteps, device=device) // timesteps_per_bin
+
+    return timestep_values, bin_indices
 
 
 def _compute_delay_buckets(

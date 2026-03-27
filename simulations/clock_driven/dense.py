@@ -4,7 +4,8 @@ from shared.clock_driven import (
     build_dense_weights_bucketized_by_delay,
     create_ring_buffer,
     create_state_variables,
-    allocate_spike_tensors,
+    create_spike_tensors,
+    create_lookup_tensors,
 )
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
@@ -14,44 +15,48 @@ from shared.simulation_config import ERGraphConfig, SNNConfig
 def run_simulation_dense_clock_driven(
     graph_config: ERGraphConfig, snn_config: SNNConfig
 ) -> None:
-    """
-    Run a clock-driven LIF spiking neural network simulation on dense graph
+    """Run a clock-driven LIF spiking neural network simulation on dense graph"""
 
-    Unpacking snn_config within the main loop causes a slight slowdown with
-    attribute lookups but cleans up the code, so it is done. Random noise is
-    generated here instead of in the compiled step function because
-    .uniform_() can cause graph breaks and thus slowdowns.
-    """
+    # Unpack config to avoid attribute lookups in simulation loop
+    num_timesteps = snn_config.num_timesteps
+    resting_voltage = snn_config.resting_voltage
+    membrane_bias = snn_config.membrane_bias
+    threshold_voltage = snn_config.threshold_voltage
+    membrane_decay = snn_config.membrane_decay
+    synaptic_decay = snn_config.synaptic_decay
+    poisson_prob = snn_config.poisson_prob
+    refractory_period = snn_config.refractory_period
 
     bucketized_weights, bucket_offsets = build_dense_weights_bucketized_by_delay(
         graph_config, snn_config
     )
 
-    ring_buffer, buffer_size = create_ring_buffer(graph_config, snn_config)
+    ring_buffer = create_ring_buffer(graph_config, snn_config)
 
     membrane_voltages, synaptic_currents, last_spike_times = create_state_variables(
         graph_config, snn_config
     )
 
-    random_noise, spikes_float = allocate_spike_tensors(graph_config=graph_config)
+    random_noise, spikes_float = create_spike_tensors(graph_config=graph_config)
 
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(
         graph_config, snn_config
     )
+
+    timestep_values, bin_indices = create_lookup_tensors(graph_config, snn_config)
 
     compile_mode = get_pytorch_compile_mode(device=graph_config.device)
     compiled_step_func = torch.compile(_simulation_step, mode=compile_mode)
 
     with MonitoringWindow("simulation main loop"):
 
-        for t in range(snn_config.num_timesteps):
-
-            random_noise.uniform_()
+        for t in range(num_timesteps):
 
             compiled_step_func(
                 t=t,
+                timestep_values=timestep_values,
+                bin_indices=bin_indices,
                 ring_buffer=ring_buffer,
-                buffer_size=buffer_size,
                 bucketized_weights=bucketized_weights,
                 bucket_offsets=bucket_offsets,
                 membrane_voltages=membrane_voltages,
@@ -61,15 +66,13 @@ def run_simulation_dense_clock_driven(
                 spikes_float=spikes_float,
                 spikes_per_neuron=spikes_per_neuron,
                 spikes_per_bin=spikes_per_bin,
-                resting_voltage=snn_config.resting_voltage,
-                membrane_bias=snn_config.membrane_bias,
-                threshold_voltage=snn_config.threshold_voltage,
-                membrane_decay=snn_config.membrane_decay,
-                synaptic_decay=snn_config.synaptic_decay,
-                poisson_prob=snn_config.poisson_prob,
-                refractory_period=snn_config.refractory_period,
-                bin_rate=snn_config.bin_rate,
-                timestep=snn_config.timestep,
+                synaptic_decay=synaptic_decay,
+                membrane_decay=membrane_decay,
+                membrane_bias=membrane_bias,
+                poisson_prob=poisson_prob,
+                refractory_period=refractory_period,
+                threshold_voltage=threshold_voltage,
+                resting_voltage=resting_voltage,
             )
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)
@@ -77,8 +80,9 @@ def run_simulation_dense_clock_driven(
 
 def _simulation_step(
     t: int,
+    timestep_values: torch.Tensor,
+    bin_indices: torch.Tensor,
     ring_buffer: torch.Tensor,
-    buffer_size: int,
     bucketized_weights: torch.Tensor,
     bucket_offsets: torch.Tensor,
     membrane_voltages: torch.Tensor,
@@ -88,15 +92,13 @@ def _simulation_step(
     spikes_float: torch.Tensor,
     spikes_per_neuron: torch.Tensor,
     spikes_per_bin: torch.Tensor,
-    resting_voltage: float,
-    membrane_bias: float,
-    threshold_voltage: float,
-    membrane_decay: float,
     synaptic_decay: float,
+    membrane_decay: float,
+    membrane_bias: float,
     poisson_prob: float,
     refractory_period: float,
-    bin_rate: float,
-    timestep: float,
+    threshold_voltage: float,
+    resting_voltage: float,
 ) -> None:
     """
     Step forward the simulation by one timestep
@@ -107,34 +109,32 @@ def _simulation_step(
 
     This is broken out of the main simulation loop in order to be
     compatible with PyTorch compilation. Compilation provides about
-    a 20% speedup but the first call is slower because the generated
-    machine code is reused by subsequent calls.
+    a 20% speedup on CPU but the first call is slower because the
+    generated machine code is reused by subsequent calls.
     """
 
-    # time and indices
-    current_time = t * timestep
-    buffer_idx = t % buffer_size
+    current_time = timestep_values[t]
 
-    # in-place current & voltage updates
-    synaptic_currents.mul_(synaptic_decay).add_(ring_buffer[buffer_idx])
+    random_noise.uniform_()
+
+    synaptic_currents.mul_(synaptic_decay).add_(ring_buffer[0])
     membrane_voltages.mul_(membrane_decay).add_(membrane_bias).add_(synaptic_currents)
 
-    # spike generation
     poisson_spikes = random_noise < poisson_prob
     can_spike_mask = current_time - last_spike_times >= refractory_period
     recurrent_spikes = membrane_voltages >= threshold_voltage
     spikes_bool = (poisson_spikes | recurrent_spikes) & (can_spike_mask)
     spikes_float[:] = spikes_bool
 
-    # propagation (schedule future current in buffer)
-    bucket_indices_in_buffer = (buffer_idx + bucket_offsets) % buffer_size
-    ring_buffer[bucket_indices_in_buffer] += bucketized_weights @ spikes_float
+    ring_buffer[bucket_offsets] += bucketized_weights @ spikes_float
 
-    # variable resets (.where seems to be slightly faster than masking with spikes_bool)
-    ring_buffer[buffer_idx].zero_()
-    membrane_voltages[:] = torch.where(spikes_bool, resting_voltage, membrane_voltages)
-    last_spike_times[:] = torch.where(spikes_bool, current_time, last_spike_times)
+    ring_buffer[:-1] = ring_buffer[1:]
+    ring_buffer[-1].zero_()
 
-    # reporting
+    membrane_voltages[spikes_bool] = resting_voltage
+    last_spike_times[spikes_bool] = current_time
+
     spikes_per_neuron += spikes_bool
-    spikes_per_bin[int(current_time // bin_rate)] += spikes_bool.sum()
+    spikes_per_bin.index_add(
+        dim=0, index=bin_indices[t].unsqueeze(0), source=spikes_bool.sum()
+    )

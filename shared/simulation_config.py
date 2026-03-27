@@ -134,6 +134,10 @@ class SNNConfig:
     @property
     def num_bins(self) -> int:
         return math.ceil(self.simulation_time / self.bin_rate)
+    
+    @property
+    def timesteps_per_bin(self) -> int:
+        return int(self.num_timesteps / self.num_bins)
 
     def __post_init__(self):
         """Validate values after instantiation."""
