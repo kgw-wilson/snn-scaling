@@ -112,6 +112,22 @@ class SNNConfig:
         return math.exp(-self.timestep / self.synaptic_time_constant)
 
     @property
+    def membrane_bias(self):
+        """
+        Calculate resting bias term for more optimized voltage updates
+
+        After some simple rearrangement, we see this biase term reduces
+        an operation.
+
+        V = (V - rest) * decay + rest + current
+        V = V * decay - rest * decay + rest + current
+        V = V * decay + rest - rest * decay + current
+        V = V * decay + rest (1 - decay) + current
+        V = V * decay + membrane_bias + current
+        """
+        return self.resting_voltage * (1 - self.membrane_decay)
+
+    @property
     def poisson_prob(self) -> float:
         return self.poisson_rate * self.timestep
 

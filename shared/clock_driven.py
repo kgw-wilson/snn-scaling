@@ -178,32 +178,30 @@ def create_state_variables(
     return membrane_voltages, synaptic_currents, last_spike_times
 
 
-def create_external_spike_drive(
-    graph_config: ERGraphConfig, snn_config: SNNConfig
-) -> torch.Tensor:
+def allocate_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
     """
-    Generate a fixed Poisson spike train used as external input drive
+    Returns per-timestep spike tensors to avoid re-allocation in loop
 
-    Precomputing the spike train avoids sampling within the simulation loop.
-    This makes simulations reproducible and faster.
+    Random noise is allocated once here and should be populated in-place
+    using .uniform_() and then used to generate the external spikes for a
+    timestep by comparing to poisson_prob. spikes_float is allocated here
+    because it avoids allocating new tensors with spikes_bool.to(dtype)
+    within the simulation loop.
 
     Returns:
-        poisson_spikes - boolean tensor [num_timesteps, num_neurons]
+        random_noise - empty tensor [num_neurons] with dtype from graph_config
+
+        spikes_float - empty tensor [num_neurons] with dtype from graph_config.
     """
 
     num_neurons = graph_config.num_neurons
     device = graph_config.device
     dtype = graph_config.dtype
-    num_timesteps = snn_config.num_timesteps
-    poisson_prob = snn_config.poisson_prob
 
-    # Each timestep uses independent Bernoulli sampling
-    poisson_spikes = (
-        torch.rand((num_timesteps, num_neurons), device=device, dtype=dtype)
-        < poisson_prob
-    )
+    random_noise = torch.empty(num_neurons, device=device, dtype=dtype)
+    spikes_float = torch.empty(num_neurons, device=device, dtype=dtype)
 
-    return poisson_spikes
+    return random_noise, spikes_float
 
 
 def _compute_delay_buckets(
