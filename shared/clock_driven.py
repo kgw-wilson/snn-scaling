@@ -6,7 +6,7 @@ from shared.simulation_config import ERGraphConfig, SNNConfig
 
 def build_dense_weights_bucketized_by_delay(
     graph_config: ERGraphConfig, snn_config: SNNConfig
-) -> tuple[torch.Tensor, torch.Tensor]:
+) -> torch.Tensor:
     """
     Build a dense weight tensor organized into discrete delay buckets
 
@@ -19,10 +19,6 @@ def build_dense_weights_bucketized_by_delay(
     Returns:
         bucketized_weights - Tensor of shape [num_buckets, num_neurons, num_neurons], where each
             slice corresponds to synapses whose delays fall into a given timestep bucket.
-
-        bucket_offsets - Integer tensor of shape [num_buckets] mapping each delay bucket
-            to its corresponding timestep index. Enables indexing into a
-            ring buffer at the correct location.
     """
 
     num_neurons = graph_config.num_neurons
@@ -31,7 +27,7 @@ def build_dense_weights_bucketized_by_delay(
 
     weights = create_er_dense(config=graph_config)
 
-    delay_bucket_indices, bucket_offsets, num_buckets = _compute_delay_buckets(
+    delay_bucket_indices, num_buckets = _compute_delay_buckets(
         graph_config=graph_config, snn_config=snn_config
     )
 
@@ -42,12 +38,12 @@ def build_dense_weights_bucketized_by_delay(
         mask = delay_bucket_indices == bucket_idx
         bucketized_weights[bucket_idx][mask] = weights[mask]
 
-    return bucketized_weights, bucket_offsets
+    return bucketized_weights
 
 
 def build_sparse_weights_bucketized_by_delay(
     graph_config: ERGraphConfig, snn_config: SNNConfig, use_numpy: bool
-) -> tuple[torch.Tensor, int]:
+) -> torch.Tensor:
     """
     Build a list of sparse weight tensors/np.ndarrays organized into discrete delay buckets
 
@@ -59,10 +55,6 @@ def build_sparse_weights_bucketized_by_delay(
     Returns:
         bucketized_weights: list of either scipy.sparse.csr_matrix or torch.sparse_csr_tensor
             depending on use_numpy value. CSR matrix of shape [num_neurons, num_neurons]
-
-        bucket_offsets - Integer tensor of shape [num_buckets] mapping each delay bucket
-            to its corresponding timestep index. Enables indexing into a
-            ring buffer at the correct location.
     """
 
     num_neurons = graph_config.num_neurons
@@ -74,7 +66,7 @@ def build_sparse_weights_bucketized_by_delay(
 
     weights = create_er_dense(config=graph_config)
 
-    delay_bucket_indices, bucket_offsets, num_buckets = _compute_delay_buckets(
+    delay_bucket_indices, num_buckets = _compute_delay_buckets(
         graph_config=graph_config, snn_config=snn_config
     )
 
@@ -113,7 +105,7 @@ def build_sparse_weights_bucketized_by_delay(
             )
             bucketized_weights.append(weights_coo.coalesce().to_sparse_csr())
 
-    return bucketized_weights, bucket_offsets
+    return bucketized_weights
 
 
 def create_ring_buffer(
@@ -204,18 +196,27 @@ def create_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
 
 
 def create_lookup_tensors(
-    graph_config: ERGraphConfig, snn_config: SNNConfig
-) -> tuple[torch.Tensor, torch.Tensor]:
+    graph_config: ERGraphConfig,
+    snn_config: SNNConfig,
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    Tensors used to lookup timestep value or bin index based on timestep index
+    Tensors used to lookup values value based on timestep
 
-    These tensors help speed up compiled PyTorch code compared to passing in
-    unique Python scalars for each timestep.
+    These tensors help speed up the main simulation loop by pre-computing
+    index values for each timestep.
 
     Returns:
         timestep_values - tensor [num_timesteps] with dtype from graph_config
+            maps timestep indices to their actual time value
 
-        bin_indices - int tensor [num_timesteps]
+        bin_indices - int tensor [num_timesteps] maps timestep to its
+            corresponding bin used to report spike statistics
+
+        buffer_indices - int tensor [num_timesteps] maps timestep to its
+            index in the ring buffer
+
+        bucket_indices_in_buffer - [num_timesteps, num_buckets] maps a timestep
+            to offsets to correctly schedule generated current into the ring buffer
     """
 
     dtype = graph_config.dtype
@@ -223,19 +224,29 @@ def create_lookup_tensors(
     num_timesteps = snn_config.num_timesteps
     timestep = snn_config.timestep
     timesteps_per_bin = snn_config.timesteps_per_bin
+    max_delay = snn_config.max_delay
+    min_delay = snn_config.min_delay
 
-    timestep_values = (
-        torch.arange(0, num_timesteps, device=device, dtype=dtype) * timestep
-    )
-    bin_indices = torch.arange(0, num_timesteps, device=device) // timesteps_per_bin
+    buffer_size = int(max_delay / timestep) + 1
+    min_delay_steps = int(min_delay / timestep)
 
-    return timestep_values, bin_indices
+    timesteps = torch.arange(0, num_timesteps, device=device)
+    timestep_values = timesteps.to(dtype) * timestep
+    bin_indices = timesteps // timesteps_per_bin
+    buffer_indices = timesteps % buffer_size
+
+    bucket_offsets = torch.arange(min_delay_steps, buffer_size, device=device)
+    bucket_indices_in_buffer = (
+        timesteps.unsqueeze(1) + bucket_offsets.unsqueeze(0)
+    ) % buffer_size
+
+    return timestep_values, bin_indices, buffer_indices, bucket_indices_in_buffer
 
 
 def _compute_delay_buckets(
     graph_config: ERGraphConfig,
     snn_config: SNNConfig,
-) -> tuple[torch.Tensor, torch.Tensor, int]:
+) -> tuple[torch.Tensor, int]:
     """
     Compute delay bucket indices and metadata shared across dense and sparse builds
 
@@ -243,9 +254,6 @@ def _compute_delay_buckets(
         delay_bucket_indices: torch.Tensor of shape [num_neurons, num_neurons] mapping
             each connection to a delay bucket
 
-        bucket_offsets - Integer tensor of shape [num_buckets] mapping each delay bucket
-            to its corresponding timestep index. Enables indexing into a
-            ring buffer at the correct location.
 
         num_buckets: Total number of delay buckets
     """
@@ -280,10 +288,4 @@ def _compute_delay_buckets(
 
     num_buckets = max_delay_steps - bucket_0_offset
 
-    bucket_offsets = torch.arange(
-        start=bucket_0_offset,
-        end=bucket_0_offset + num_buckets,
-        device=device,
-    )
-
-    return delay_bucket_indices, bucket_offsets, num_buckets
+    return delay_bucket_indices, num_buckets

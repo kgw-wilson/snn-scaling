@@ -3,7 +3,7 @@ import torch
 
 from shared.simulation_config import ERGraphConfig, SNNConfig
 from simulations.clock_driven.dense_cpu import clock_driven_dense_cpu
-from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
+# from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
 
 # from simulations.clock_driven.sparse_cpu import run_simulation_sparse_cpu
 # from simulations.clock_driven.sparse_gpu import run_simulation_sparse_gpu
@@ -16,7 +16,7 @@ _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     torch.device("cpu"): [clock_driven_dense_cpu],
-    torch.device("cuda"): [clock_driven_dense_gpu],
+    # torch.device("cuda"): [clock_driven_dense_gpu],
     torch.device("mps"): [],
 }
 
