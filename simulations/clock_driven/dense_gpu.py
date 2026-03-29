@@ -61,7 +61,6 @@ def clock_driven_dense_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -
             can_spike_mask = current_time - last_spike_times >= refractory_period
             recurrent_spikes = membrane_voltages >= threshold_voltage
             spikes_bool = (poisson_spikes | recurrent_spikes) & can_spike_mask
-
             spikes_float[:] = spikes_bool
 
             ring_buffer.index_add_(
@@ -69,7 +68,6 @@ def clock_driven_dense_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -
             )
 
             ring_buffer[buffer_indices[t]].zero_()
-
             membrane_voltages[:] = torch.where(
                 spikes_bool, resting_voltage, membrane_voltages
             )
@@ -78,9 +76,8 @@ def clock_driven_dense_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -
             )
 
             spikes_per_neuron += spikes_bool
-
             spikes_per_bin.index_add_(
-                0, bin_indices[t].unsqueeze(0), spikes_bool.sum().unsqueeze(0)
+                0, bin_indices[t].unsqueeze(0), spikes_float.sum().unsqueeze(0)
             )
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)

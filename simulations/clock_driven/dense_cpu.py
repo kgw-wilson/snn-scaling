@@ -71,6 +71,6 @@ def clock_driven_dense_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -
             last_spike_times[spikes_bool] = current_time
 
             spikes_per_neuron += spikes_bool
-            spikes_per_bin[bin_indices[t]] += spikes_bool.sum()
+            spikes_per_bin[bin_indices[t]] += spikes_float.sum()
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)
