@@ -2,9 +2,11 @@ import numpy as np
 import torch
 
 from shared.simulation_config import ERGraphConfig, SNNConfig
-from simulations.clock_driven.dense import run_simulation_dense
-from simulations.clock_driven.sparse_cpu import run_simulation_sparse_cpu
-from simulations.clock_driven.sparse_gpu import run_simulation_sparse_gpu
+from simulations.clock_driven.dense_cpu import clock_driven_dense_cpu
+from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
+
+# from simulations.clock_driven.sparse_cpu import run_simulation_sparse_cpu
+# from simulations.clock_driven.sparse_gpu import run_simulation_sparse_gpu
 
 
 _CONNECTION_PROBS = [0.1]
@@ -13,9 +15,9 @@ _NUM_NEURONS = [1000]
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
-    torch.device("cpu"): [run_simulation_dense, run_simulation_sparse_cpu],
-    torch.device("cuda"): [run_simulation_dense, run_simulation_sparse_gpu],
-    torch.device("mps"): [run_simulation_dense],
+    torch.device("cpu"): [clock_driven_dense_cpu],
+    torch.device("cuda"): [clock_driven_dense_gpu],
+    torch.device("mps"): [],
 }
 
 
@@ -28,8 +30,8 @@ def _get_available_devices() -> list[torch.device]:
 
     available_devices = [torch.device("cpu")]
 
-    # if torch.cuda.is_available():
-    # available_devices.append(torch.device("cuda"))
+    if torch.cuda.is_available():
+        available_devices.append(torch.device("cuda"))
 
     # if torch.backends.mps.is_available():
     #     available_devices.append(torch.device("mps"))

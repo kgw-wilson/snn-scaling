@@ -47,12 +47,12 @@ def build_dense_weights_bucketized_by_delay(
 
 def build_sparse_weights_bucketized_by_delay(
     graph_config: ERGraphConfig, snn_config: SNNConfig, use_numpy: bool
-) -> tuple[list, int]:
+) -> tuple[torch.Tensor, int]:
     """
     Build a list of sparse weight tensors/np.ndarrays organized into discrete delay buckets
 
     Relies on a dense weight graph for simplicity, but is very memory inefficient because of
-    its creation of
+    its creation of the dense weight graph and multiple sparse matrices.
 
     TODO: update to make more memory efficient.
 

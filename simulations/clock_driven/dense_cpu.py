@@ -12,7 +12,7 @@ from shared.reporting import report_spike_statistics, create_spike_reporting_ten
 from shared.simulation_config import ERGraphConfig, SNNConfig
 
 
-def run_simulation_dense_clock_driven(
+def clock_driven_dense_cpu(
     graph_config: ERGraphConfig, snn_config: SNNConfig
 ) -> None:
     """Run a clock-driven LIF spiking neural network simulation on dense graph"""
@@ -51,6 +51,8 @@ def run_simulation_dense_clock_driven(
     with MonitoringWindow("simulation main loop"):
 
         for t in range(num_timesteps):
+
+            random_noise.uniform_()
 
             compiled_step_func(
                 t=t,
@@ -114,8 +116,6 @@ def _simulation_step(
     """
 
     current_time = timestep_values[t]
-
-    random_noise.uniform_()
 
     synaptic_currents.mul_(synaptic_decay).add_(ring_buffer[0])
     membrane_voltages.mul_(membrane_decay).add_(membrane_bias).add_(synaptic_currents)
