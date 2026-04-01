@@ -3,6 +3,9 @@ TODO: add in helper functions used in clock-driven and move them
 to some shared place
 TODO: look at runtime and python overhead and consider adding
 numba
+Your phase diagram becomes: for a given (N, p, firing rate) point, which architecture
+wins on energy per SynOp? With topology as a qualitative modifier. That's a rich enough
+parameter space to tell a compelling story without being intractable to run.
 """
 
 import numpy as np

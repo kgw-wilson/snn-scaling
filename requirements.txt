@@ -29,6 +29,7 @@ rich==14.3.3
 scikit-learn==1.8.0
 scipy==1.17.1
 six==1.17.0
+sparse_dot_mkl==0.9.10
 sympy==1.14.0
 threadpoolctl==3.6.0
 torch==2.10.0
@@ -37,4 +38,3 @@ typeguard==4.5.1
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 tyro==1.0.8
-zeus-apple-silicon==1.0.4

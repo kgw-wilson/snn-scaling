@@ -1,5 +1,6 @@
 import numpy as np
 import torch
+import sparse_dot_mkl
 from shared.clock_driven import (
     build_sparse_weights_bucketized_by_delay,
     create_ring_buffer,
@@ -17,7 +18,6 @@ def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
 
     # Unpack config objects to avoid attribute lookups
     num_neurons = graph_config.num_neurons
-    num_timesteps = snn_config.num_timesteps
     resting_voltage = snn_config.resting_voltage
     membrane_bias = snn_config.membrane_bias
     threshold_voltage = snn_config.threshold_voltage
@@ -92,7 +92,9 @@ def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
 
             for bucket_idx in range(num_buckets):
                 target_idx = bucket_indices_in_buffer[t][bucket_idx]
-                ring_buffer[target_idx] += bucketized_weights[bucket_idx] @ spikes_float
+                ring_buffer[target_idx] += sparse_dot_mkl.dot_product_mkl(
+                    bucketized_weights[bucket_idx], spikes_float
+                )
 
             ring_buffer[buffer_idx].fill(0.0)
             membrane_voltages[spikes_bool] = resting_voltage
