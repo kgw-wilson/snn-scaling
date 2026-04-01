@@ -203,7 +203,7 @@ def create_lookup_tensors(
     Tensors used to quickly lookup values based on timestep index
 
     Returns:
-        timesteps - int tensor [num_neurons] timestep indices
+        timesteps_indices - int tensor [num_neurons]
 
         timestep_values - tensor [num_timesteps] with dtype from graph_config
             maps timestep indices to their actual time value
@@ -229,17 +229,23 @@ def create_lookup_tensors(
     buffer_size = int(max_delay / timestep) + 1
     min_delay_steps = int(min_delay / timestep)
 
-    timesteps = torch.arange(0, num_timesteps, device=device)
-    timestep_values = timesteps.to(dtype) * timestep
-    bin_indices = timesteps // timesteps_per_bin
-    buffer_indices = timesteps % buffer_size
+    timesteps_indices = torch.arange(0, num_timesteps, device=device)
+    timestep_values = timesteps_indices.to(dtype) * timestep
+    bin_indices = timesteps_indices // timesteps_per_bin
+    buffer_indices = timesteps_indices % buffer_size
 
     bucket_offsets = torch.arange(min_delay_steps, buffer_size, device=device)
     bucket_indices_in_buffer = (
-        timesteps.unsqueeze(1) + bucket_offsets.unsqueeze(0)
+        timesteps_indices.unsqueeze(1) + bucket_offsets.unsqueeze(0)
     ) % buffer_size
 
-    return timesteps, timestep_values, bin_indices, buffer_indices, bucket_indices_in_buffer
+    return (
+        timesteps_indices,
+        timestep_values,
+        bin_indices,
+        buffer_indices,
+        bucket_indices_in_buffer,
+    )
 
 
 def _compute_delay_buckets(

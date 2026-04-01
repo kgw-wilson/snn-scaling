@@ -36,7 +36,7 @@ def clock_driven_dense_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -
     random_noise, spikes_float = create_spike_tensors(graph_config=graph_config)
 
     (
-        timesteps,
+        timestep_indices,
         timestep_values,
         bin_indices,
         buffer_indices,
@@ -49,7 +49,7 @@ def clock_driven_dense_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -
 
     with MonitoringWindow("simulation main loop"):
 
-        for t in timesteps:
+        for t in timestep_indices:
 
             current_time = timestep_values[t]
             buffer_idx = buffer_indices[t]

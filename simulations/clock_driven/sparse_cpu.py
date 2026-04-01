@@ -39,7 +39,7 @@ def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
     random_noise, spikes_float = create_spike_tensors(graph_config=graph_config)
 
     (
-        timesteps,
+        timestep_indices,
         timestep_values,
         bin_indices,
         buffer_indices,
@@ -55,6 +55,7 @@ def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
     last_spike_times = last_spike_times.numpy()
     random_noise = random_noise.to(torch.float64).numpy()
     spikes_float = spikes_float.numpy()
+    timestep_indices = timestep_indices.numpy()
     timestep_values = timestep_values.numpy()
     bin_indices = bin_indices.numpy()
     buffer_indices = buffer_indices.numpy()
@@ -69,7 +70,7 @@ def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
 
     with MonitoringWindow("simulation main loop"):
 
-        for t in timesteps:
+        for t in timestep_indices:
 
             current_time = timestep_values[t]
             buffer_idx = buffer_indices[t]
