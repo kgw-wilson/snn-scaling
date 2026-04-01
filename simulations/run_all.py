@@ -5,7 +5,7 @@ from shared.simulation_config import ERGraphConfig, SNNConfig
 from simulations.clock_driven.dense_cpu import clock_driven_dense_cpu
 from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
 from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
-# from simulations.event_driven.cpu import event_driven_cpu
+from simulations.event_driven.cpu import event_driven_cpu
 
 
 _CONNECTION_PROBS = [0.1]
@@ -15,8 +15,9 @@ _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     torch.device("cpu"): [
-        clock_driven_dense_cpu,
-        clock_driven_sparse_cpu,
+        # clock_driven_dense_cpu,
+        # clock_driven_sparse_cpu,
+        event_driven_cpu,
     ],  # clock_driven_dense_cpu, clock_driven_sparse_cpu, event_driven_cpu
     torch.device("cuda"): [clock_driven_dense_gpu],
     torch.device("mps"): [],

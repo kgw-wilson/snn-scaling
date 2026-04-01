@@ -2,13 +2,13 @@ import torch
 from shared.clock_driven import (
     build_sparse_weights_bucketized_by_delay,
     create_ring_buffer,
-    create_state_variables,
     create_spike_tensors,
     create_lookup_tensors,
 )
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
 from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.utils import create_state_variables
 
 
 def clock_driven_sparse_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -> None:
@@ -70,7 +70,9 @@ def clock_driven_sparse_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) 
 
             for bucket_idx in range(num_buckets):
                 target_idx = bucket_indices_in_buffer[t][bucket_idx]
-                ring_buffer[target_idx] += torch.mv(bucketized_weights[bucket_idx], spikes_float)
+                ring_buffer[target_idx] += torch.mv(
+                    bucketized_weights[bucket_idx], spikes_float
+                )
 
             ring_buffer[buffer_idx].zero_()
             membrane_voltages[spikes_bool] = resting_voltage

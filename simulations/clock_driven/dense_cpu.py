@@ -1,13 +1,13 @@
 from shared.clock_driven import (
     build_dense_weights_bucketized_by_delay,
     create_ring_buffer,
-    create_state_variables,
     create_spike_tensors,
     create_lookup_tensors,
 )
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
 from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.utils import create_state_variables
 
 
 def clock_driven_dense_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -> None:
