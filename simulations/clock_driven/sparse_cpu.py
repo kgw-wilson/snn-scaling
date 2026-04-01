@@ -1,86 +1,103 @@
-from shared.clock_driven import build_sparse_weights_bucketized_by_delay, create_ring_buffer, create_state_variables, create_external_spike_drive
+import numpy as np
+import torch
+from shared.clock_driven import (
+    build_sparse_weights_bucketized_by_delay,
+    create_ring_buffer,
+    create_state_variables,
+    create_spike_tensors,
+    create_lookup_tensors,
+)
 from shared.simulation_config import ERGraphConfig, SNNConfig
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
 
 
-def run_simulation_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
+def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
     """Run SNN simulation using sparse csr matrix for synaptic weights on CPU"""
 
     # Unpack config objects to avoid attribute lookups
-    timestep = snn_config.timestep
-    resting_voltage = snn_config.resting_voltage
-    threshold_voltage = snn_config.threshold_voltage
+    num_neurons = graph_config.num_neurons
     num_timesteps = snn_config.num_timesteps
+    resting_voltage = snn_config.resting_voltage
+    membrane_bias = snn_config.membrane_bias
+    threshold_voltage = snn_config.threshold_voltage
     membrane_decay = snn_config.membrane_decay
     synaptic_decay = snn_config.synaptic_decay
-    bin_rate = snn_config.bin_rate
+    poisson_prob = snn_config.poisson_prob
     refractory_period = snn_config.refractory_period
 
-
-    bucketized_weights, bucket_offsets = build_sparse_weights_bucketized_by_delay(
+    bucketized_weights, num_buckets = build_sparse_weights_bucketized_by_delay(
         graph_config=graph_config, snn_config=snn_config, use_numpy=True
     )
-    bucket_0_offset = bucket_offsets[0]
 
-    ring_buffer, buffer_size = create_ring_buffer(
-        graph_config=graph_config, snn_config=snn_config
-    )
+    ring_buffer = create_ring_buffer(graph_config=graph_config, snn_config=snn_config)
 
     membrane_voltages, synaptic_currents, last_spike_times = create_state_variables(
         graph_config=graph_config, snn_config=snn_config
     )
-    poisson_spikes = create_external_spike_drive(
-        graph_config=graph_config, snn_config=snn_config
-    )
 
-    # Intentionally do not use .cpu() to throw error upon device mismatch
+    random_noise, spikes_float = create_spike_tensors(graph_config=graph_config)
+
+    (
+        timesteps,
+        timestep_values,
+        bin_indices,
+        buffer_indices,
+        bucket_indices_in_buffer,
+    ) = create_lookup_tensors(graph_config, snn_config)
+
+    # Convert everything to numpy even if it doesn't need to be to keep everything
+    # aligned. Intentionally does not use .cpu() to throw error upon device mismatch.
+    # Random noise has to be float64 for compatibility with numpy's default_rng.random
     ring_buffer = ring_buffer.numpy()
     membrane_voltages = membrane_voltages.numpy()
     synaptic_currents = synaptic_currents.numpy()
     last_spike_times = last_spike_times.numpy()
-    poisson_spikes = poisson_spikes.numpy()
+    random_noise = random_noise.to(torch.float64).numpy()
+    spikes_float = spikes_float.numpy()
+    timestep_values = timestep_values.numpy()
+    bin_indices = bin_indices.numpy()
+    buffer_indices = buffer_indices.numpy()
+    bucket_indices_in_buffer = bucket_indices_in_buffer.numpy()
 
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(
         graph_config=graph_config, snn_config=snn_config
     )
 
+    # TODO: Pass seed down here somehow
+    rng = np.random.default_rng()
+
     with MonitoringWindow("simulation main loop"):
 
-        for t in range(num_timesteps):
+        for t in timesteps:
 
-            # time and indices
-            current_time = t * timestep
-            buffer_idx = t % buffer_size
+            current_time = timestep_values[t]
+            buffer_idx = buffer_indices[t]
 
-            # current update
-            incoming_current = ring_buffer[buffer_idx]
-            synaptic_currents = synaptic_currents * synaptic_decay + incoming_current
+            rng.random(size=num_neurons, out=random_noise)
 
-            # voltage update
-            membrane_voltages = (
-                (membrane_voltages - resting_voltage) * membrane_decay
-                + resting_voltage
-                + synaptic_currents
-            )
+            synaptic_currents *= synaptic_decay
+            synaptic_currents += ring_buffer[buffer_idx]
 
-            # spike generation
+            membrane_voltages *= membrane_decay
+            membrane_voltages += membrane_bias
+            membrane_voltages += synaptic_currents
+
+            poisson_spikes = random_noise < poisson_prob
             can_spike_mask = current_time - last_spike_times >= refractory_period
             recurrent_spikes = membrane_voltages >= threshold_voltage
-            spikes = (poisson_spikes[t] | recurrent_spikes) & can_spike_mask
+            spikes_bool = (poisson_spikes | recurrent_spikes) & (can_spike_mask)
+            np.copyto(spikes_float, spikes_bool)
 
-            # propagation (schedule future current in buffer)
-            for bucket_idx in range(len(bucketized_weights)):
-                bucket_idx_in_buffer = (buffer_idx + bucket_0_offset + bucket_idx) % buffer_size
-                ring_buffer[bucket_idx_in_buffer] = bucketized_weights[bucket_idx].dot(spikes)
+            for bucket_idx in range(num_buckets):
+                target_idx = bucket_indices_in_buffer[t][bucket_idx]
+                ring_buffer[target_idx] += bucketized_weights[bucket_idx] @ spikes_float
 
-            # variable resets
             ring_buffer[buffer_idx].fill(0.0)
-            last_spike_times[spikes] = current_time
-            membrane_voltages[spikes] = resting_voltage
+            membrane_voltages[spikes_bool] = resting_voltage
+            last_spike_times[spikes_bool] = current_time
 
-            # reporting
-            spikes_per_neuron += spikes
-            spikes_per_bin[int(current_time // bin_rate)] += spikes.sum()
+            spikes_per_neuron += spikes_bool
+            spikes_per_bin[bin_indices[t]] += spikes_float.sum()
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)

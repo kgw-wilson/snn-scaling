@@ -43,7 +43,7 @@ def build_dense_weights_bucketized_by_delay(
 
 def build_sparse_weights_bucketized_by_delay(
     graph_config: ERGraphConfig, snn_config: SNNConfig, use_numpy: bool
-) -> torch.Tensor:
+) -> tuple[list[torch.Tensor] | list[csr_matrix], int]:
     """
     Build a list of sparse weight tensors/np.ndarrays organized into discrete delay buckets
 
@@ -105,12 +105,12 @@ def build_sparse_weights_bucketized_by_delay(
             )
             bucketized_weights.append(weights_coo.coalesce().to_sparse_csr())
 
-    return bucketized_weights
+    return bucketized_weights, num_buckets
 
 
 def create_ring_buffer(
     graph_config: ERGraphConfig, snn_config: SNNConfig
-) -> tuple[torch.Tensor, int]:
+) -> torch.Tensor:
     """
     Create a circular buffer used to store delayed synaptic inputs
 
@@ -198,14 +198,13 @@ def create_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
 def create_lookup_tensors(
     graph_config: ERGraphConfig,
     snn_config: SNNConfig,
-) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """
-    Tensors used to lookup values value based on timestep
-
-    These tensors help speed up the main simulation loop by pre-computing
-    index values for each timestep.
+    Tensors used to quickly lookup values based on timestep index
 
     Returns:
+        timesteps - int tensor [num_neurons] timestep indices
+
         timestep_values - tensor [num_timesteps] with dtype from graph_config
             maps timestep indices to their actual time value
 
@@ -240,7 +239,7 @@ def create_lookup_tensors(
         timesteps.unsqueeze(1) + bucket_offsets.unsqueeze(0)
     ) % buffer_size
 
-    return timestep_values, bin_indices, buffer_indices, bucket_indices_in_buffer
+    return timesteps, timestep_values, bin_indices, buffer_indices, bucket_indices_in_buffer
 
 
 def _compute_delay_buckets(
