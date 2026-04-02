@@ -73,3 +73,19 @@ The long-term objective is to characterize how graph structure, sparsity, and sp
 ## Status
 
 Early-stage development, beginning with dense PyTorch baselines.
+
+## Setup
+
+Assumes `pyenv` is installed and correctly using version from `.python-version`.
+
+```shell
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+If changes are made to `simulations/event_driven/cpu.cpp` it will need to be compiled with:
+
+```shell
+python setup.py build_ext --inplace   
+```

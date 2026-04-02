@@ -10,7 +10,6 @@ def report_spike_statistics(
     Print spike statistics after a simulation run
 
     Args:
-        total_spike_count: Total number of spikes in the simulationn
         spikes_per_neuron: 1D tensor of shape [num_neurons] with spike counts per neuron
         spikes_per_bin: 1D tensor of shape [num_bins] with spike counts per time bin
     """

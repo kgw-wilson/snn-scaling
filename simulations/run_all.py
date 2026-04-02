@@ -7,7 +7,6 @@ from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
 from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
 from simulations.event_driven.cpu import event_driven_cpu
 
-
 _CONNECTION_PROBS = [0.1]
 _NUM_NEURONS = [1000]
 
@@ -15,12 +14,11 @@ _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     torch.device("cpu"): [
-        # clock_driven_dense_cpu,
-        # clock_driven_sparse_cpu,
+        clock_driven_dense_cpu,
+        clock_driven_sparse_cpu,
         event_driven_cpu,
-    ],  # clock_driven_dense_cpu, clock_driven_sparse_cpu, event_driven_cpu
-    torch.device("cuda"): [clock_driven_dense_gpu],
-    torch.device("mps"): [],
+    ], 
+    torch.device("cuda"): [clock_driven_dense_gpu, clock_driven_sparse_cpu]
 }
 
 
@@ -28,16 +26,13 @@ def _get_available_devices() -> list[torch.device]:
     """Returns list of all available devices
 
     CPU is always available. Because CUDA index is not specified,
-    assumes current CUDA device. MPS only surfaces one device.
+    assumes current CUDA device.
     """
 
     available_devices = [torch.device("cpu")]
 
     if torch.cuda.is_available():
         available_devices.append(torch.device("cuda"))
-
-    # if torch.backends.mps.is_available():
-    #     available_devices.append(torch.device("mps"))
 
     return available_devices
 
@@ -71,8 +66,6 @@ if __name__ == "__main__":
                         )
                         % 2**32
                     )
-                    torch.manual_seed(seed)
-                    np.random.seed(seed)
 
                     graph_config = ERGraphConfig(
                         num_neurons=num_neurons,
@@ -96,6 +89,6 @@ if __name__ == "__main__":
                         refractory_period=0.2e-3,
                     )
 
-                    simulation(graph_config=graph_config, snn_config=snn_config)
+                    simulation(graph_config=graph_config, snn_config=snn_config, seed=seed)
 
     print("All simulations completed.")

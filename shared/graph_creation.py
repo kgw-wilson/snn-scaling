@@ -63,9 +63,8 @@ def create_er_sparse(
 
     Callers of this function should set use_numpy to False if running
     a simulation with a CUDA backend. Callers should set use_numpy to
-    True if running on CPU or MPS. This is because PyTorch's sparse support
-    on CPU and MPS is currently inefficient or nonexistent, respectively
-    (as of 03/2026).
+    True if running on CPU. This is because PyTorch's sparse support
+    on CPU is inefficient (as of 03/2026).
 
     The weight tensor is created as coo first because of its
     more human-friendly format and then converted to csr for

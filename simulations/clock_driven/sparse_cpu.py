@@ -13,10 +13,13 @@ from shared.reporting import report_spike_statistics, create_spike_reporting_ten
 from shared.utils import create_state_variables
 
 
-def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
-    """Run SNN simulation using sparse csr matrix for synaptic weights on CPU"""
+def clock_driven_sparse_cpu(
+    graph_config: ERGraphConfig, snn_config: SNNConfig, seed: int
+):
+    """Run clock-driven SNN simulation on CPU using sparse csr matrix for weights"""
 
-    # Unpack config objects to avoid attribute lookups
+    torch.manual_seed(seed)
+
     num_neurons = graph_config.num_neurons
     resting_voltage = snn_config.resting_voltage
     membrane_bias = snn_config.membrane_bias
@@ -65,8 +68,7 @@ def clock_driven_sparse_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig):
         graph_config=graph_config, snn_config=snn_config
     )
 
-    # TODO: Pass seed down here
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(seed)
 
     with MonitoringWindow("simulation main loop"):
 

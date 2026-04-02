@@ -1,3 +1,4 @@
+import torch
 from shared.clock_driven import (
     build_dense_weights_bucketized_by_delay,
     create_ring_buffer,
@@ -10,10 +11,13 @@ from shared.simulation_config import ERGraphConfig, SNNConfig
 from shared.utils import create_state_variables
 
 
-def clock_driven_dense_cpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -> None:
-    """Run a clock-driven LIF spiking neural network simulation on dense graph"""
+def clock_driven_dense_cpu(
+    graph_config: ERGraphConfig, snn_config: SNNConfig, seed: int
+) -> None:
+    """Run clock-driven SNN simulation on CPU using dense graph for weights"""
 
-    # Unpack config to avoid attribute lookups in simulation loop
+    torch.manual_seed(seed)
+
     resting_voltage = snn_config.resting_voltage
     membrane_bias = snn_config.membrane_bias
     threshold_voltage = snn_config.threshold_voltage

@@ -11,10 +11,13 @@ from shared.simulation_config import ERGraphConfig, SNNConfig
 from shared.utils import create_state_variables
 
 
-def clock_driven_sparse_gpu(graph_config: ERGraphConfig, snn_config: SNNConfig) -> None:
-    """Run SNN simulation using sparse csr tensor for weights on GPU"""
+def clock_driven_sparse_gpu(
+    graph_config: ERGraphConfig, snn_config: SNNConfig, seed: int
+) -> None:
+    """Run clock-driven SNN simulation on GPU using sparse csr tensor for weights"""
 
-    # Unpack config to avoid attribute lookups in simulation loop
+    torch.manual_seed(seed)
+
     resting_voltage = snn_config.resting_voltage
     membrane_bias = snn_config.membrane_bias
     threshold_voltage = snn_config.threshold_voltage
