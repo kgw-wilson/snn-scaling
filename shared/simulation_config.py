@@ -4,62 +4,9 @@ import torch
 
 
 @dataclass
-class ERGraphConfig:
-    """Configuration for Erdos-Renyi graphs"""
-
-    num_neurons: int
-    connection_prob: float
-    global_coupling_strength: float
-    device: torch.device
-    dtype: torch.dtype
-
-    def __post_init__(self):
-        """Validate values after instantiation"""
-
-        if not isinstance(self.num_neurons, int) or self.num_neurons <= 0:
-            raise ValueError(
-                f"number of neurons must be a positive integer, got {self.num_neurons}"
-            )
-
-        if (
-            not isinstance(self.connection_prob, (float, int))
-            or not 0 < self.connection_prob <= 1
-        ):
-            raise ValueError(
-                f"connection probability must be in (0,1], got {self.connection_prob}"
-            )
-
-        if (
-            not isinstance(self.global_coupling_strength, float)
-            or self.global_coupling_strength <= 0
-        ):
-            raise ValueError(
-                f"global coupling trength must be positive, got {self.global_coupling_strength}"
-            )
-
-        if not isinstance(self.device, torch.device):
-            raise TypeError(f"device must be a torch.device, got {type(self.device)}")
-        else:
-            if self.device.type == "cuda":
-                if not torch.cuda.is_available():
-                    raise ValueError("CUDA is not available on this system")
-                if (
-                    self.device.index is not None
-                    and self.device.index >= torch.cuda.device_count()
-                ):
-                    raise ValueError(f"CUDA device {self.device.index} not found")
-
-            elif self.device.type != "cpu":
-                raise ValueError(f"Only CUDA and CPU devices are supported, got {self.device}")
-
-        if not isinstance(self.dtype, torch.dtype):
-            raise ValueError(f"dtype must be a torch.dtype, got {type(self.dtype)}")
-
-
-@dataclass
-class SNNConfig:
+class SimulationConfig:
     """
-    Spiking Neural Network configuration
+    Simulation configuration parameters for spiking neural network simulations
 
     Time-related constants are in seconds. Voltage variables
     are in millivolts. Rates are in Hz.
@@ -72,13 +19,20 @@ class SNNConfig:
     should be << 1 for accuracy.
     """
 
+    num_neurons: int
+    connection_prob: float
+    device: torch.device
+    dtype: torch.dtype
     timestep: float
     simulation_time: float
-    membrane_time_constant: float
+    resistance: float
+    capacitance: float
     synaptic_time_constant: float
     resting_voltage: float
     threshold_voltage: float
     poisson_rate: float
+    poisson_weight: float
+    recurrent_weight: float
     bin_rate: float
     min_delay: float
     max_delay: float
@@ -87,6 +41,10 @@ class SNNConfig:
     @property
     def num_timesteps(self) -> int:
         return int(self.simulation_time / self.timestep)
+
+    @property
+    def membrane_time_constant(self) -> float:
+        return self.resistance * self.capacitance
 
     @property
     def membrane_decay(self):
@@ -109,24 +67,8 @@ class SNNConfig:
         return math.exp(-self.timestep / self.synaptic_time_constant)
 
     @property
-    def membrane_bias(self):
-        """
-        Calculate resting bias term for more optimized voltage updates
-
-        After some simple rearrangement, we see this biase term reduces
-        an operation.
-
-        V = (V - rest) * decay + rest + current
-        V = V * decay - rest * decay + rest + current
-        V = V * decay + rest - rest * decay + current
-        V = V * decay + rest (1 - decay) + current
-        V = V * decay + membrane_bias + current
-        """
-        return self.resting_voltage * (1 - self.membrane_decay)
-
-    @property
     def poisson_prob(self) -> float:
-        """Converts poisson spikes per second to poisson spikes per timestep"""
+        """Converts poisson spikes per second to probability of poisson spike per timestep"""
         return self.poisson_rate * self.timestep
 
     @property
@@ -135,10 +77,43 @@ class SNNConfig:
 
     @property
     def timesteps_per_bin(self) -> int:
-        return int(self.num_timesteps / self.num_bins)
+        return math.ceil(self.num_timesteps / self.num_bins)
 
     def __post_init__(self):
         """Validate values after instantiation."""
+
+        if not isinstance(self.num_neurons, int) or self.num_neurons <= 0:
+            raise ValueError(
+                f"number of neurons must be a positive integer, got {self.num_neurons}"
+            )
+
+        if (
+            not isinstance(self.connection_prob, (float, int))
+            or not 0 < self.connection_prob <= 1
+        ):
+            raise ValueError(
+                f"connection probability must be in (0,1], got {self.connection_prob}"
+            )
+
+        if not isinstance(self.device, torch.device):
+            raise TypeError(f"device must be a torch.device, got {type(self.device)}")
+        else:
+            if self.device.type == "cuda":
+                if not torch.cuda.is_available():
+                    raise ValueError("CUDA is not available on this system")
+                if (
+                    self.device.index is not None
+                    and self.device.index >= torch.cuda.device_count()
+                ):
+                    raise ValueError(f"CUDA device {self.device.index} not found")
+
+            elif self.device.type != "cpu":
+                raise ValueError(
+                    f"Only CUDA and CPU devices are supported, got {self.device}"
+                )
+
+        if not isinstance(self.dtype, torch.dtype):
+            raise ValueError(f"dtype must be a torch.dtype, got {type(self.dtype)}")
 
         if not isinstance(self.timestep, float) or self.timestep <= 0:
             raise ValueError(f"timestep must be positive float, got {self.timestep}")
@@ -191,6 +166,16 @@ class SNNConfig:
         if not isinstance(self.poisson_rate, float) or self.poisson_rate <= 0:
             raise TypeError(
                 f"poisson_rate must be positive float, got {self.poisson_rate}"
+            )
+
+        if not isinstance(self.poisson_weight, float) or self.poisson_rate <= 0:
+            raise TypeError(
+                f"poisson_weight must be positive float, got {self.poisson_rate}"
+            )
+
+        if not isinstance(self.recurrent_weight, float) or self.recurrent_weight <= 0:
+            raise TypeError(
+                f"recurrent_weight must be positive float, got {self.recurrent_weight}"
             )
 
         if self.poisson_prob >= 1 or self.poisson_prob > 0.1:

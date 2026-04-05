@@ -7,25 +7,26 @@ from shared.clock_driven import (
     create_spike_tensors,
     create_lookup_tensors,
 )
-from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.simulation_config import ERGraphConfig, SimulationConfig
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
 from shared.utils import create_state_variables
 
 
 def clock_driven_sparse_cpu(
-    graph_config: ERGraphConfig, snn_config: SNNConfig, seed: int
+    graph_config: ERGraphConfig, snn_config: SimulationConfig, seed: int
 ):
     """Run clock-driven SNN simulation on CPU using sparse csr matrix for weights"""
 
     torch.manual_seed(seed)
 
     num_neurons = graph_config.num_neurons
+    resistance = snn_config.resistance
     resting_voltage = snn_config.resting_voltage
-    membrane_bias = snn_config.membrane_bias
     threshold_voltage = snn_config.threshold_voltage
     membrane_decay = snn_config.membrane_decay
     synaptic_decay = snn_config.synaptic_decay
+    poisson_weight = snn_config.poisson_weight
     poisson_prob = snn_config.poisson_prob
     refractory_period = snn_config.refractory_period
 
@@ -36,7 +37,7 @@ def clock_driven_sparse_cpu(
     ring_buffer = create_ring_buffer(graph_config=graph_config, snn_config=snn_config)
 
     membrane_voltages, synaptic_currents, last_spike_times = create_state_variables(
-        graph_config=graph_config, snn_config=snn_config
+        sim_config=graph_config, snn_config=snn_config
     )
 
     random_noise, spikes_float = create_spike_tensors(graph_config=graph_config)
@@ -65,7 +66,7 @@ def clock_driven_sparse_cpu(
     bucket_indices_in_buffer = bucket_indices_in_buffer.numpy()
 
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(
-        graph_config=graph_config, snn_config=snn_config
+        sim_config=graph_config, snn_config=snn_config
     )
 
     rng = np.random.default_rng(seed)
@@ -81,15 +82,15 @@ def clock_driven_sparse_cpu(
 
             synaptic_currents *= synaptic_decay
             synaptic_currents += ring_buffer[buffer_idx]
+            synaptic_currents += poisson_weight * (random_noise < poisson_prob)
 
-            membrane_voltages *= membrane_decay
-            membrane_voltages += membrane_bias
-            membrane_voltages += synaptic_currents
+            outside_refractory = current_time - last_spike_times >= refractory_period
 
-            poisson_spikes = random_noise < poisson_prob
-            can_spike_mask = current_time - last_spike_times >= refractory_period
-            recurrent_spikes = membrane_voltages >= threshold_voltage
-            spikes_bool = (poisson_spikes | recurrent_spikes) & (can_spike_mask)
+            alpha = synaptic_currents * resistance + resting_voltage
+            new_voltages = alpha + (membrane_voltages - alpha) * membrane_decay
+            membrane_voltages[outside_refractory] = new_voltages[outside_refractory]
+
+            spikes_bool = membrane_voltages >= threshold_voltage
             np.copyto(spikes_float, spikes_bool)
 
             for bucket_idx in range(num_buckets):
@@ -102,7 +103,7 @@ def clock_driven_sparse_cpu(
             membrane_voltages[spikes_bool] = resting_voltage
             last_spike_times[spikes_bool] = current_time
 
-            spikes_per_neuron += spikes_bool
+            spikes_per_neuron += spikes_float
             spikes_per_bin[bin_indices[t]] += spikes_float.sum()
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)

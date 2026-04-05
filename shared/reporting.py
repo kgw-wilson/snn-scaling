@@ -1,5 +1,5 @@
 import torch
-from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.simulation_config import SimulationConfig
 
 
 def report_spike_statistics(
@@ -27,7 +27,7 @@ def report_spike_statistics(
 
 
 def create_spike_reporting_tensors(
-    graph_config: ERGraphConfig, snn_config: SNNConfig
+    sim_config: SimulationConfig,
 ) -> tuple[torch.Tensor, torch.Tensor]:
     """
     Initialize tensors used for spike-count statistics during simulation
@@ -44,10 +44,10 @@ def create_spike_reporting_tensors(
             coarse time bins (useful for population firing rate analysis)
     """
 
-    num_neurons = graph_config.num_neurons
-    device = graph_config.device
-    dtype = graph_config.dtype
-    num_bins = snn_config.num_bins
+    num_neurons = sim_config.num_neurons
+    device = sim_config.device
+    dtype = sim_config.dtype
+    num_bins = sim_config.num_bins
 
     spikes_per_neuron = torch.zeros(num_neurons, device=device, dtype=dtype)
     spikes_per_bin = torch.zeros(num_bins, device=device, dtype=dtype)

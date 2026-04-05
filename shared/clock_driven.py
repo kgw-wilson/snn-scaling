@@ -1,11 +1,11 @@
 from scipy.sparse import csr_matrix
 import torch
 from shared.graph_creation import create_er_dense
-from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.simulation_config import SimulationConfig
 
 
 def build_dense_weights_bucketized_by_delay(
-    graph_config: ERGraphConfig, snn_config: SNNConfig
+    sim_config: SimulationConfig,
 ) -> torch.Tensor:
     """
     Build a dense weight tensor organized into discrete delay buckets
@@ -21,15 +21,13 @@ def build_dense_weights_bucketized_by_delay(
             slice corresponds to synapses whose delays fall into a given timestep bucket.
     """
 
-    num_neurons = graph_config.num_neurons
-    dtype = graph_config.dtype
-    device = graph_config.device
+    num_neurons = sim_config.num_neurons
+    dtype = sim_config.dtype
+    device = sim_config.device
 
-    weights = create_er_dense(config=graph_config)
+    weights = create_er_dense(sim_config)
 
-    delay_bucket_indices, num_buckets = _compute_delay_buckets(
-        graph_config=graph_config, snn_config=snn_config
-    )
+    delay_bucket_indices, num_buckets = _compute_delay_buckets(sim_config)
 
     bucketized_weights = torch.zeros(
         (num_buckets, num_neurons, num_neurons), device=device, dtype=dtype
@@ -42,7 +40,7 @@ def build_dense_weights_bucketized_by_delay(
 
 
 def build_sparse_weights_bucketized_by_delay(
-    graph_config: ERGraphConfig, snn_config: SNNConfig, use_numpy: bool
+    sim_config: SimulationConfig, use_numpy: bool
 ) -> tuple[list[torch.Tensor] | list[csr_matrix], int]:
     """
     Build a list of sparse weight tensors/np.ndarrays organized into discrete delay buckets
@@ -57,18 +55,16 @@ def build_sparse_weights_bucketized_by_delay(
             depending on use_numpy value. CSR matrix of shape [num_neurons, num_neurons]
     """
 
-    num_neurons = graph_config.num_neurons
-    dtype = graph_config.dtype
-    device = graph_config.device
+    num_neurons = sim_config.num_neurons
+    dtype = sim_config.dtype
+    device = sim_config.device
 
     if use_numpy and device != torch.device("cpu"):
         raise ValueError("This function should only use numpy when running on CPU.")
 
-    weights = create_er_dense(config=graph_config)
+    weights = create_er_dense(config=sim_config)
 
-    delay_bucket_indices, num_buckets = _compute_delay_buckets(
-        graph_config=graph_config, snn_config=snn_config
-    )
+    delay_bucket_indices, num_buckets = _compute_delay_buckets(sim_config)
 
     row_idx, col_idx = torch.nonzero(weights, as_tuple=True)
     values = weights[row_idx, col_idx]
@@ -108,9 +104,7 @@ def build_sparse_weights_bucketized_by_delay(
     return bucketized_weights, num_buckets
 
 
-def create_ring_buffer(
-    graph_config: ERGraphConfig, snn_config: SNNConfig
-) -> torch.Tensor:
+def create_ring_buffer(sim_config: SimulationConfig) -> torch.Tensor:
     """
     Create a circular buffer used to store delayed synaptic inputs
 
@@ -118,12 +112,11 @@ def create_ring_buffer(
         ring_buffer - tensor of shape [buffer_size, num_neurons]
     """
 
-    num_neurons = graph_config.num_neurons
-    device = graph_config.device
-    dtype = graph_config.dtype
-
-    max_delay = snn_config.max_delay
-    timestep = snn_config.timestep
+    num_neurons = sim_config.num_neurons
+    device = sim_config.device
+    dtype = sim_config.dtype
+    max_delay = sim_config.max_delay
+    timestep = sim_config.timestep
 
     buffer_size = int(max_delay / timestep) + 1
     ring_buffer = torch.zeros(
@@ -136,7 +129,7 @@ def create_ring_buffer(
     return ring_buffer
 
 
-def create_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
+def create_spike_tensors(sim_config: SimulationConfig) -> torch.Tensor:
     """
     Returns per-timestep spike tensors to avoid re-allocation in loop
 
@@ -148,14 +141,14 @@ def create_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
     simulation loop.
 
     Returns:
-        random_noise - empty tensor [num_neurons] with dtype from graph_config
+        random_noise - empty tensor [num_neurons] with dtype from sim_config
 
-        spikes_float - empty tensor [num_neurons] with dtype from graph_config.
+        spikes_float - empty tensor [num_neurons] with dtype from sim_config.
     """
 
-    num_neurons = graph_config.num_neurons
-    device = graph_config.device
-    dtype = graph_config.dtype
+    num_neurons = sim_config.num_neurons
+    device = sim_config.device
+    dtype = sim_config.dtype
 
     random_noise = torch.empty(num_neurons, device=device, dtype=dtype)
     spikes_float = torch.empty(num_neurons, device=device, dtype=dtype)
@@ -164,16 +157,15 @@ def create_spike_tensors(graph_config: ERGraphConfig) -> torch.Tensor:
 
 
 def create_lookup_tensors(
-    graph_config: ERGraphConfig,
-    snn_config: SNNConfig,
+    sim_config: SimulationConfig,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Tensors used to quickly lookup values based on timestep index
 
     Returns:
-        timesteps_indices - int tensor [num_neurons]
+        timestep_indices - int tensor [num_timesteps] stores each timestep index
 
-        timestep_values - tensor [num_timesteps] with dtype from graph_config
+        timestep_values - tensor [num_timesteps] with dtype from sim_config
             maps timestep indices to their actual time value
 
         bin_indices - int tensor [num_timesteps] maps timestep to its
@@ -186,29 +178,29 @@ def create_lookup_tensors(
             to offsets to correctly schedule generated current into the ring buffer
     """
 
-    dtype = graph_config.dtype
-    device = graph_config.device
-    num_timesteps = snn_config.num_timesteps
-    timestep = snn_config.timestep
-    timesteps_per_bin = snn_config.timesteps_per_bin
-    max_delay = snn_config.max_delay
-    min_delay = snn_config.min_delay
+    dtype = sim_config.dtype
+    device = sim_config.device
+    num_timesteps = sim_config.num_timesteps
+    timestep = sim_config.timestep
+    timesteps_per_bin = sim_config.timesteps_per_bin
+    max_delay = sim_config.max_delay
+    min_delay = sim_config.min_delay
 
     buffer_size = int(max_delay / timestep) + 1
     min_delay_steps = int(min_delay / timestep)
 
-    timesteps_indices = torch.arange(0, num_timesteps, device=device)
-    timestep_values = timesteps_indices.to(dtype) * timestep
-    bin_indices = timesteps_indices // timesteps_per_bin
-    buffer_indices = timesteps_indices % buffer_size
+    timestep_indices = torch.arange(0, num_timesteps, device=device)
+    timestep_values = timestep_indices.to(dtype) * timestep
+    bin_indices = timestep_indices // timesteps_per_bin
+    buffer_indices = timestep_indices % buffer_size
 
     bucket_offsets = torch.arange(min_delay_steps, buffer_size, device=device)
     bucket_indices_in_buffer = (
-        timesteps_indices.unsqueeze(1) + bucket_offsets.unsqueeze(0)
+        timestep_indices.unsqueeze(1) + bucket_offsets.unsqueeze(0)
     ) % buffer_size
 
     return (
-        timesteps_indices,
+        timestep_indices,
         timestep_values,
         bin_indices,
         buffer_indices,
@@ -216,10 +208,7 @@ def create_lookup_tensors(
     )
 
 
-def _compute_delay_buckets(
-    graph_config: ERGraphConfig,
-    snn_config: SNNConfig,
-) -> tuple[torch.Tensor, int]:
+def _compute_delay_buckets(sim_config: SimulationConfig) -> tuple[torch.Tensor, int]:
     """
     Compute delay bucket indices and metadata shared across dense and sparse builds
 
@@ -227,17 +216,15 @@ def _compute_delay_buckets(
         delay_bucket_indices: torch.Tensor of shape [num_neurons, num_neurons] mapping
             each connection to a delay bucket
 
-
         num_buckets: Total number of delay buckets
     """
 
-    num_neurons = graph_config.num_neurons
-    dtype = graph_config.dtype
-    device = graph_config.device
-
-    timestep = snn_config.timestep
-    min_delay = snn_config.min_delay
-    max_delay = snn_config.max_delay
+    num_neurons = sim_config.num_neurons
+    dtype = sim_config.dtype
+    device = sim_config.device
+    timestep = sim_config.timestep
+    min_delay = sim_config.min_delay
+    max_delay = sim_config.max_delay
 
     bucket_0_offset = int(min_delay / timestep)
     max_delay_steps = int(max_delay / timestep) + 1
@@ -253,11 +240,12 @@ def _compute_delay_buckets(
     delays = torch.empty(num_neurons, num_neurons, device=device, dtype=dtype)
     delays.uniform_(min_delay, max_delay)
 
-    # Subtract by 1 because bucket values start at 1. Delays will never be
+    # Subtract by 1 because bucket values start at 0 for values less than the
+    # first timestep boundary. Delays will never be
     # lower than bucket_0_offset * timestep and thus will always be at least at
     # bucket 1. Similarly, no need to clamp because no delay will be greater
     # than or equal to max_delay_steps * timestep.
-    delay_bucket_indices = torch.bucketize(delays, timestep_boundaries) - 1
+    delay_bucket_indices = torch.bucketize(delays, timestep_boundaries, right=True) - 1
 
     num_buckets = max_delay_steps - bucket_0_offset
 

@@ -1,24 +1,26 @@
-import numpy as np
+import math
 import torch
 
-from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.simulation_config import SimulationConfig
 from simulations.clock_driven.dense_cpu import clock_driven_dense_cpu
-from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
-from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
+
+# from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
+
+# from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
 from simulations.event_driven.cpu import event_driven_cpu
 
-_CONNECTION_PROBS = [0.1]
-_NUM_NEURONS = [1000]
+_CONNECTION_PROBS = [0.5]
+_NUM_NEURONS = [1000, 2000, 3000]
 
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     torch.device("cpu"): [
         clock_driven_dense_cpu,
-        clock_driven_sparse_cpu,
+        # clock_driven_sparse_cpu,
         event_driven_cpu,
-    ], 
-    torch.device("cuda"): [clock_driven_dense_gpu, clock_driven_sparse_cpu]
+    ],
+    torch.device("cuda"): [],  # [clock_driven_dense_gpu, clock_driven_sparse_cpu]
 }
 
 
@@ -67,28 +69,42 @@ if __name__ == "__main__":
                         % 2**32
                     )
 
-                    graph_config = ERGraphConfig(
+                    # Set resting voltage to 0 for simplicity. Resistance * Capacitance should be around 5-20 ms.
+                    # The values for recurrent_weight and poisson_weight are experimental but are linearly
+                    # dependent on resting_voltage and inversely dependent on resistance for basic consistency
+                    # with I = V/R. They depend inversely on the square root of the number of connections to keep
+                    # variance roughly the same through the network. Finally, poisson_weight is scaled by the number
+                    # of connections since poisson current only affects one neuron while recurrent current affects
+                    # all connected neurons. Initial experiments with these weights produced total poisson current
+                    # about 10-20% of total recurrent current which is reasonable.
+                    # min_delay should be greater than or equal to timestep, and refractory period is a multiple
+                    # of timestep so neurons will not fire again in the same timestep which is crucial for correctness
+                    # in the event-driven simulation.
+                    sim_config = SimulationConfig(
                         num_neurons=num_neurons,
                         connection_prob=connection_prob,
-                        global_coupling_strength=10.0,
                         device=device,
                         dtype=torch.float32,
-                    )
-
-                    snn_config = SNNConfig(
                         timestep=0.1e-3,
-                        simulation_time=1.0,
-                        membrane_time_constant=20e-3,
+                        simulation_time=0.1e-3 * 200,
+                        resistance=10.0,
+                        capacitance=1e-3,
                         synaptic_time_constant=5e-3,
                         resting_voltage=0.0,
-                        threshold_voltage=20.0,
-                        poisson_rate=5.0,
+                        threshold_voltage=20e-3,
+                        recurrent_weight=(
+                            20e-3 / (10.0 * math.sqrt(num_neurons * connection_prob))
+                        ),
+                        poisson_rate=50.0,
+                        poisson_weight=(
+                            (num_neurons * connection_prob * 20e-3) / (10.0 * math.sqrt(num_neurons * connection_prob))
+                        ),
                         bin_rate=1e-3,
-                        min_delay=0.1e-3,  # 2.1e-3,
-                        max_delay=0.4e-3,  # 4.3e-3,
-                        refractory_period=0.2e-3,
+                        min_delay=0.1e-3,
+                        max_delay=0.1e-3,
+                        refractory_period=0.1e-3 * 20,
                     )
 
-                    simulation(graph_config=graph_config, snn_config=snn_config, seed=seed)
+                    simulation(sim_config, seed)
 
     print("All simulations completed.")

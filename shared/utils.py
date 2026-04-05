@@ -1,9 +1,9 @@
 import torch
-from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.simulation_config import SimulationConfig
 
 
 def create_state_variables(
-    graph_config: ERGraphConfig, snn_config: SNNConfig
+    sim_config: SimulationConfig,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
     """
     Initialize dynamic neuron state variables for the LIF simulation
@@ -16,10 +16,10 @@ def create_state_variables(
         last_spike_times - timestamp of last spike per neuron (for refractory enforcement)
     """
 
-    num_neurons = graph_config.num_neurons
-    device = graph_config.device
-    dtype = graph_config.dtype
-    resting_voltage = snn_config.resting_voltage
+    num_neurons = sim_config.num_neurons
+    device = sim_config.device
+    dtype = sim_config.dtype
+    resting_voltage = sim_config.resting_voltage
 
     membrane_voltages = torch.full(
         (num_neurons,), resting_voltage, device=device, dtype=dtype

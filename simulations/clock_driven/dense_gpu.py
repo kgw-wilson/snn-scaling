@@ -7,22 +7,23 @@ from shared.clock_driven import (
 )
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
-from shared.simulation_config import ERGraphConfig, SNNConfig
+from shared.simulation_config import ERGraphConfig, SimulationConfig
 from shared.utils import create_state_variables
 
 
 def clock_driven_dense_gpu(
-    graph_config: ERGraphConfig, snn_config: SNNConfig, seed: int
+    graph_config: ERGraphConfig, snn_config: SimulationConfig, seed: int
 ) -> None:
     """Run clock-driven SNN simulation on GPU using dense graph for weights"""
 
     torch.manual_seed(seed)
 
     resting_voltage = snn_config.resting_voltage
-    membrane_bias = snn_config.membrane_bias
+    resistance = snn_config.resistance
     threshold_voltage = snn_config.threshold_voltage
     membrane_decay = snn_config.membrane_decay
     synaptic_decay = snn_config.synaptic_decay
+    poisson_weight = snn_config.poisson_weight
     poisson_prob = snn_config.poisson_prob
     refractory_period = snn_config.refractory_period
 
@@ -61,15 +62,15 @@ def clock_driven_dense_gpu(
 
             synaptic_currents *= synaptic_decay
             synaptic_currents += ring_buffer[buffer_idx]
+            synaptic_currents += poisson_weight * (random_noise < poisson_prob)
+            
+            outside_refractory = current_time - last_spike_times >= refractory_period
 
-            membrane_voltages *= membrane_decay
-            membrane_voltages += membrane_bias
-            membrane_voltages += synaptic_currents
+            alpha = synaptic_currents * resistance + resting_voltage
+            new_voltages = alpha + (membrane_voltages - alpha) * membrane_decay
+            membrane_voltages[outside_refractory] = new_voltages[outside_refractory]
 
-            poisson_spikes = random_noise < poisson_prob
-            can_spike_mask = current_time - last_spike_times >= refractory_period
-            recurrent_spikes = membrane_voltages >= threshold_voltage
-            spikes_bool = (poisson_spikes | recurrent_spikes) & can_spike_mask
+            spikes_bool = membrane_voltages >= threshold_voltage
             spikes_float.copy_(spikes_bool)
 
             ring_buffer[bucket_indices_in_buffer[t]] += (
@@ -80,7 +81,7 @@ def clock_driven_dense_gpu(
             membrane_voltages[spikes_bool] = resting_voltage
             last_spike_times[spikes_bool] = current_time
 
-            spikes_per_neuron += spikes_bool
+            spikes_per_neuron += spikes_float
             spikes_per_bin[bin_indices[t]] += spikes_float.sum()
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)
