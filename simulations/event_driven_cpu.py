@@ -6,7 +6,7 @@ from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
-import simulations.event_driven_cpu_cpp as cpu_cpp
+import simulations.event_driven_cpu_backend as backend
 
 
 def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:
@@ -29,7 +29,7 @@ def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:
     )
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(sim_config)
 
-    sim = cpu_cpp.Simulation(
+    sim = backend.Simulation(
         indptr=weights.indptr.astype(np.int32),
         indices=weights.indices.astype(np.int32),
         weights=weights.data.astype(np.float32),

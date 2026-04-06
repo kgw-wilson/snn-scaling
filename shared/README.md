@@ -12,4 +12,4 @@ This folder contains the following files that contain constants, types, and util
 
 - `simulation_config.py`: Dataclasses for describing the parameters to be used during a simulation
 
-- `utils.py`: Shared tensors between clock-driven and event-driven simulations
+- `utils.py`: Miscellaneous utilities

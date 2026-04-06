@@ -187,7 +187,7 @@ public:
     }
 };
 
-PYBIND11_MODULE(cpu_cpp, m)
+PYBIND11_MODULE(event_driven_cpu_backend, m)
 {
     py::class_<Simulation>(m, "Simulation")
         .def(py::init<

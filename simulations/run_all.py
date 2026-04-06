@@ -1,11 +1,11 @@
 import math
 import torch
-import pyNN.spiNNaker as p
 
 from shared.simulation_config import SimulationConfig
-from simulations.clock_driven_dense_cpu import clock_driven_dense_cpu
+from shared.utils import get_available_devices
+# from simulations.clock_driven_dense_cpu import clock_driven_dense_cpu
 from simulations.clock_driven_dense_gpu import clock_driven_dense_gpu
-from simulations.clock_driven_sparse_cpu import clock_driven_sparse_cpu
+# from simulations.clock_driven_sparse_cpu import clock_driven_sparse_cpu
 from simulations.clock_driven_sparse_gpu import clock_driven_sparse_gpu
 from simulations.event_driven_cpu import event_driven_cpu
 from simulations.neuromorphic import neuromorphic
@@ -16,41 +16,19 @@ _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     "cpu": [
-        clock_driven_dense_cpu,
-        clock_driven_sparse_cpu,
+        # clock_driven_dense_cpu,
+        # clock_driven_sparse_cpu,
         event_driven_cpu,
-        neuromorphic,
+        # neuromorphic,
     ],
     "gpu": [clock_driven_dense_gpu, clock_driven_sparse_gpu],
     "neuromorphic": [neuromorphic],
 }
 
 
-def _get_available_devices() -> list[str]:
-    """Returns list of all available devices
-
-    CPU is always available. Because CUDA index is not specified,
-    assumes current CUDA device.
-    """
-
-    available_devices = ["cpu"]
-
-    if torch.cuda.is_available():
-        available_devices.append("gpu")
-
-    try:
-        p.setup()
-        p.end()
-        available_devices.append("neuromorphic")
-    except:
-        pass
-
-    return available_devices
-
-
 if __name__ == "__main__":
 
-    available_devices = _get_available_devices()
+    available_devices = get_available_devices()
 
     for device in available_devices:
 
