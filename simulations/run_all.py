@@ -3,9 +3,9 @@ import torch
 
 from shared.simulation_config import SimulationConfig
 from shared.utils import get_available_devices
-# from simulations.clock_driven_dense_cpu import clock_driven_dense_cpu
+from simulations.clock_driven_dense_cpu import clock_driven_dense_cpu
 from simulations.clock_driven_dense_gpu import clock_driven_dense_gpu
-# from simulations.clock_driven_sparse_cpu import clock_driven_sparse_cpu
+from simulations.clock_driven_sparse_cpu import clock_driven_sparse_cpu
 from simulations.clock_driven_sparse_gpu import clock_driven_sparse_gpu
 from simulations.event_driven_cpu import event_driven_cpu
 from simulations.neuromorphic import neuromorphic
@@ -16,10 +16,9 @@ _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     "cpu": [
-        # clock_driven_dense_cpu,
-        # clock_driven_sparse_cpu,
+        clock_driven_dense_cpu,
+        clock_driven_sparse_cpu,
         event_driven_cpu,
-        # neuromorphic,
     ],
     "gpu": [clock_driven_dense_gpu, clock_driven_sparse_gpu],
     "neuromorphic": [neuromorphic],
