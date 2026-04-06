@@ -1,0 +1,82 @@
+The default PyNN timestep of 0.1 is less than 1(ms) that SpyNNaker is designed for. Consider including a timestep in your setup call.
+2026-04-06 02:45:32 INFO: Read configs files: /usr/local/lib/python3.12/dist-packages/spinn_utilities/spinn_utilities.cfg, /usr/local/lib/python3.12/dist-packages/spinn_machine/spinn_machine.cfg, /usr/local/lib/python3.12/dist-packages/pacman/pacman.cfg, /usr/local/lib/python3.12/dist-packages/spinnman/spinnman.cfg, /usr/local/lib/python3.12/dist-packages/spinn_front_end_common/interface/spinnaker.cfg, /usr/local/lib/python3.12/dist-packages/spynnaker/pyNN/spynnaker.cfg, /root/.spynnaker.cfg, ./spynnaker.cfg
+2026-04-06 02:45:32 INFO: As mode is Production running all reports and keeping files is turned off unless specifically asked for in cfg
+2026-04-06 02:45:32 INFO: Will search these locations for binaries: /usr/local/lib/python3.12/dist-packages/spynnaker/pyNN/model_binaries
+2026-04-06 02:45:32 INFO: Setting hardware timestep as 100 microseconds based on simulation time step of 100 and timescale factor of 1.0
+2026-04-06 02:45:32 INFO: Created Machine on 127.0.0.0 with 3600 Chips, 64200 cores and 10496.0 links. Chips have sdram of 123469792 bytes, router table of size 1023, between 17 and 18 cores and between 3 and 6 links.
+2026-04-06 02:45:32 INFO: Virtual machine generator took 0:00:00.221608 
+2026-04-06 02:45:32 INFO: Cleanup reports folder based on cfg took 0:00:00.000372 
+===================
+Running clock_driven_dense_cpu on cpu with num_neurons=1000 and connection_prob=0.5
+Simulation main took 0.9266026020050049 seconds.
+== Spike Statistics ==
+Total spikes: 45108.0
+Mean spikes per neuron: 45.11
+Std spikes per neuron: 0.32
+Mean spikes per bin: 451.08
+Std spikes per bin: 388.67
+Max spikes by a neuron: 47.0
+Min spikes by a neuron: 45.0
+Max spikes in a bin: 1000.0
+Min spikes in a bin: 0.0
+===================
+Running clock_driven_sparse_cpu on cpu with num_neurons=1000 and connection_prob=0.5
+Simulation main took 0.9938733577728271 seconds.
+== Spike Statistics ==
+Total spikes: 45100.0
+Mean spikes per neuron: 45.10
+Std spikes per neuron: 0.31
+Mean spikes per bin: 451.00
+Std spikes per bin: 389.06
+Max spikes by a neuron: 47.0
+Min spikes by a neuron: 45.0
+Max spikes in a bin: 1000.0
+Min spikes in a bin: 0.0
+===================
+Running event_driven_cpu on cpu with num_neurons=1000 and connection_prob=0.5
+/content/snn-scaling/shared/graph_creation.py:104: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  weights_csr = weights_coo.coalesce().to_sparse_csr()
+Simulation main took 3.7111353874206543 seconds.
+== Spike Statistics ==
+Total spikes: 44000.0
+Mean spikes per neuron: 44.00
+Std spikes per neuron: 0.00
+Mean spikes per bin: 440.00
+Std spikes per bin: 381.63
+Max spikes by a neuron: 44.0
+Min spikes by a neuron: 44.0
+Max spikes in a bin: 1000.0
+Min spikes in a bin: 0.0
+===================
+Running clock_driven_dense_gpu on gpu with num_neurons=1000 and connection_prob=0.5
+Simulation main took 0.8273000717163086 seconds.
+== Spike Statistics ==
+Total spikes: 45120.0
+Mean spikes per neuron: 45.12
+Std spikes per neuron: 0.34
+Mean spikes per bin: 451.20
+Std spikes per bin: 386.73
+Max spikes by a neuron: 47.0
+Min spikes by a neuron: 45.0
+Max spikes in a bin: 1000.0
+Min spikes in a bin: 0.0
+===================
+Running clock_driven_sparse_gpu on gpu with num_neurons=1000 and connection_prob=0.5
+Simulation main took 0.8806755542755127 seconds.
+== Spike Statistics ==
+Total spikes: 45120.0
+Mean spikes per neuron: 45.12
+Std spikes per neuron: 0.34
+Mean spikes per bin: 451.20
+Std spikes per bin: 386.73
+Max spikes by a neuron: 47.0
+Min spikes by a neuron: 45.0
+Max spikes in a bin: 1000.0
+Min spikes in a bin: 0.0
+All simulations completed.
+
+!WARNING: 1 log messages were generated at level WARNING or above.
+This may mean that the results are invalid.
+You are advised to check the details of these in the p_log_view of : /content/snn-scaling/reports/2026-04-06-02-45-32-564739/global_provenance.sqlite3
+These are:
+The default PyNN timestep of 0.1 is less than 1(ms) that SpyNNaker is designed for. Consider including a timestep in your setup call.
