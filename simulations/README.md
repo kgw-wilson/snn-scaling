@@ -2,11 +2,11 @@
 
 These implementations are designed for benchmarking CPU vs GPU vs neuromorphic performance for simulating a spiking neural network. That is with event-driven and clock-driven implementations with dense vs sparse operations under controlled scaling conditions. Activity is driven by external Poisson current input and recurrent connectivity. The function uses basic LIF neurons. The model is minimal to isolate scaling behavior from biological complexity. Weight updates are not done. State updates take the analytical form instead of using Euler integration which is an approximation.
 
-## Clock-driven Simiulations
+## Clock-driven Simulations
 
 Main simulation loops in this folder follow this flow: update currents, update voltages, find spiking neurons, schdule current in the future, perform necessary resets, and then do reporting. This order is used for correctness and to maintain biological plausibility.
 
-## Event-driven simulations
+## Event-driven Simulations
 
 Calculations in the event-driven simulations are similar to the clock-driven ones, with these changes:
 
