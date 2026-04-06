@@ -45,7 +45,7 @@ def clock_driven_dense_cpu(sim_config: SimulationConfig, seed: int) -> None:
 
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(sim_config)
 
-    with MonitoringWindow("simulation main loop"):
+    with MonitoringWindow("Simulation main"):
 
         for t in timestep_indices:
 

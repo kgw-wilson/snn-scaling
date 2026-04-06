@@ -1,40 +1,48 @@
 import math
 import torch
+import pyNN.spiNNaker as p
 
 from shared.simulation_config import SimulationConfig
 from simulations.clock_driven.dense_cpu import clock_driven_dense_cpu
-
-# from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
-
-# from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
+from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
+from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
 from simulations.event_driven.cpu import event_driven_cpu
+from simulations.event_driven.neuromorphic import neuromorphic
 
 _CONNECTION_PROBS = [0.5]
-_NUM_NEURONS = [1000, 2000, 3000]
-
+_NUM_NEURONS = [1000]
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
-    torch.device("cpu"): [
+    "cpu": [
         clock_driven_dense_cpu,
-        # clock_driven_sparse_cpu,
+        clock_driven_sparse_cpu,
         event_driven_cpu,
+        neuromorphic,
     ],
-    torch.device("cuda"): [],  # [clock_driven_dense_gpu, clock_driven_sparse_cpu]
+    "gpu": [clock_driven_dense_gpu, clock_driven_sparse_cpu],
+    "neuromorphic": [neuromorphic],
 }
 
 
-def _get_available_devices() -> list[torch.device]:
+def _get_available_devices() -> list[str]:
     """Returns list of all available devices
 
     CPU is always available. Because CUDA index is not specified,
     assumes current CUDA device.
     """
 
-    available_devices = [torch.device("cpu")]
+    available_devices = ["cpu"]
 
     if torch.cuda.is_available():
-        available_devices.append(torch.device("cuda"))
+        available_devices.append("gpu")
+
+    try:
+        p.setup()
+        p.end()
+        available_devices.append("neuromorphic")
+    except:
+        pass
 
     return available_devices
 
@@ -83,10 +91,10 @@ if __name__ == "__main__":
                     sim_config = SimulationConfig(
                         num_neurons=num_neurons,
                         connection_prob=connection_prob,
-                        device=device,
+                        device_str=device,
                         dtype=torch.float32,
-                        timestep=0.1e-3,
-                        simulation_time=0.1e-3 * 200,
+                        timestep=1e-3,
+                        simulation_time=1e-3 * 1000,
                         resistance=10.0,
                         capacitance=1e-3,
                         synaptic_time_constant=5e-3,
@@ -97,12 +105,13 @@ if __name__ == "__main__":
                         ),
                         poisson_rate=50.0,
                         poisson_weight=(
-                            (num_neurons * connection_prob * 20e-3) / (10.0 * math.sqrt(num_neurons * connection_prob))
+                            (num_neurons * connection_prob * 20e-3)
+                            / (10.0 * math.sqrt(num_neurons * connection_prob))
                         ),
-                        bin_rate=1e-3,
-                        min_delay=0.1e-3,
-                        max_delay=0.1e-3,
-                        refractory_period=0.1e-3 * 20,
+                        bin_rate=10e-3,
+                        min_delay=1e-3 * 2,
+                        max_delay=1e-3 * 4,
+                        refractory_period=1e-3 * 20,
                     )
 
                     simulation(sim_config, seed)

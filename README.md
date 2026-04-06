@@ -48,8 +48,10 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-If changes are made to `simulations/event_driven/cpu.cpp` it will need to be compiled with:
+Before running `python -m simulations.run_all`, `simulations/event_driven/cpu.cpp` will need to be compiled with:
 
 ```shell
 python setup.py build_ext --inplace   
 ```
+
+The first time running all simulations, `simulations/neuromorphic/neuromorphic.py` will fail due to a missing config. It will create this config and should be good to go on subsequent runs.

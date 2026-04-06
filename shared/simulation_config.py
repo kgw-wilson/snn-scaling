@@ -21,7 +21,7 @@ class SimulationConfig:
 
     num_neurons: int
     connection_prob: float
-    device: torch.device
+    device_str: str
     dtype: torch.dtype
     timestep: float
     simulation_time: float
@@ -37,6 +37,14 @@ class SimulationConfig:
     min_delay: float
     max_delay: float
     refractory_period: float
+
+    @property
+    def device(self) -> torch.device:
+        if self.device_str == "cpu":
+            return torch.device("cpu")
+        if self.device_str == "gpu":
+            return torch.device("cuda")
+        return None
 
     @property
     def num_timesteps(self) -> int:

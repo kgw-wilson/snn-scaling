@@ -56,8 +56,7 @@ def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:
         seed=seed,
     )
 
-    with MonitoringWindow("simulation main loop"):
-
+    with MonitoringWindow("Simulation main"):
         result = sim.run()
 
     report_spike_statistics(

@@ -4,3 +4,4 @@ build
 local_only
 *.so
 .DS_STORE
+reports

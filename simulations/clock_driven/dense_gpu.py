@@ -7,37 +7,33 @@ from shared.clock_driven import (
 )
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
-from shared.simulation_config import ERGraphConfig, SimulationConfig
+from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
 
 
-def clock_driven_dense_gpu(
-    graph_config: ERGraphConfig, snn_config: SimulationConfig, seed: int
-) -> None:
+def clock_driven_dense_gpu(sim_config: SimulationConfig, seed: int) -> None:
     """Run clock-driven SNN simulation on GPU using dense graph for weights"""
 
     torch.manual_seed(seed)
 
-    resting_voltage = snn_config.resting_voltage
-    resistance = snn_config.resistance
-    threshold_voltage = snn_config.threshold_voltage
-    membrane_decay = snn_config.membrane_decay
-    synaptic_decay = snn_config.synaptic_decay
-    poisson_weight = snn_config.poisson_weight
-    poisson_prob = snn_config.poisson_prob
-    refractory_period = snn_config.refractory_period
+    resting_voltage = sim_config.resting_voltage
+    resistance = sim_config.resistance
+    threshold_voltage = sim_config.threshold_voltage
+    membrane_decay = sim_config.membrane_decay
+    synaptic_decay = sim_config.synaptic_decay
+    poisson_weight = sim_config.poisson_weight
+    poisson_prob = sim_config.poisson_prob
+    refractory_period = sim_config.refractory_period
 
-    bucketized_weights = build_dense_weights_bucketized_by_delay(
-        graph_config, snn_config
-    )
+    bucketized_weights = build_dense_weights_bucketized_by_delay(sim_config)
 
-    ring_buffer = create_ring_buffer(graph_config, snn_config)
+    ring_buffer = create_ring_buffer(sim_config)
 
     membrane_voltages, synaptic_currents, last_spike_times = create_state_variables(
-        graph_config, snn_config
+        sim_config
     )
 
-    random_noise, spikes_float = create_spike_tensors(graph_config=graph_config)
+    random_noise, spikes_float = create_spike_tensors(sim_config)
 
     (
         timestep_indices,
@@ -45,13 +41,11 @@ def clock_driven_dense_gpu(
         bin_indices,
         buffer_indices,
         bucket_indices_in_buffer,
-    ) = create_lookup_tensors(graph_config, snn_config)
+    ) = create_lookup_tensors(sim_config)
 
-    spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(
-        graph_config, snn_config
-    )
+    spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(sim_config)
 
-    with MonitoringWindow("simulation main loop"):
+    with MonitoringWindow("Simulation main"):
 
         for t in timestep_indices:
 
@@ -63,7 +57,7 @@ def clock_driven_dense_gpu(
             synaptic_currents *= synaptic_decay
             synaptic_currents += ring_buffer[buffer_idx]
             synaptic_currents += poisson_weight * (random_noise < poisson_prob)
-            
+
             outside_refractory = current_time - last_spike_times >= refractory_period
 
             alpha = synaptic_currents * resistance + resting_voltage
