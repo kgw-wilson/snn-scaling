@@ -50,7 +50,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Before running `python -m simulations.run_all`, `simulations/event_driven/cpu.cpp` will need to be compiled with:
+Before running `python -m simulations.run_all`, the event-driven C++ backend will need to be compiled with:
 
 ```shell
 python setup.py build_ext --inplace   
