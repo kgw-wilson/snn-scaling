@@ -35,11 +35,8 @@ def create_state_variables(
     return membrane_voltages, synaptic_currents, last_spike_times
 
 
-def get_available_devices() -> list["str"]:
+def get_available_devices() -> list[str]:
     """Returns list of all available device names
-
-    CPU is always available. Because CUDA index is not specified,
-    assumes current CUDA device.
 
     This method for checking access to an actual SpiNNaker machine
     is hacky, but the package does not appear to surface an official

@@ -5,9 +5,7 @@ class MonitoringWindow:
     """
     Context manager for measuring runtime and energy/memory consumption of a code block
 
-    Currently only supports Apple devices but will be extended to support other platforms.
-
-    TODO: support other platforms and use CUDA synchronize
+    TODO: support intel/nvidia/spinnaker platforms and use CUDA synchronize
     """
 
     def __init__(self, name: str):

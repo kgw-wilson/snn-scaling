@@ -7,6 +7,7 @@ from shared.reporting import create_spike_reporting_tensors, report_spike_statis
 
 
 def neuromorphic(sim_config: SimulationConfig, seed: int):
+    """Run SNN using SpyNNaker to access neuromorphic hardware"""
 
     p.setup(timestep=sim_config.timestep * 1000, time_scale_factor=1000)
     p.set_number_of_neurons_per_core(p.IF_curr_exp, 64)

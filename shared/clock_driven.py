@@ -136,7 +136,7 @@ def create_spike_tensors(sim_config: SimulationConfig) -> torch.Tensor:
     Random noise is allocated once here and should be populated in-place
     using .uniform_() and then used to generate the external spikes for a
     timestep by comparing to poisson_prob. spikes_float is allocated here
-    and should be updated with spikes_float[:] = spikes_bool because that
+    and should be updated by copying spikes_bool into it because that
     avoids allocating new tensors with spikes_bool.to(dtype) within the
     simulation loop.
 

@@ -23,8 +23,6 @@ def create_er_dense(sim_config: SimulationConfig) -> torch.Tensor:
     N = sim_config.num_neurons
     p = sim_config.connection_prob
 
-    torch.manual_seed(int(N * p)) # TODO: put in for testing
-
     num_edges = int(N * N * p)
 
     weights = torch.full(
@@ -77,8 +75,6 @@ def create_er_sparse(
     p = sim_config.connection_prob
     device = sim_config.device
     dtype = sim_config.dtype
-
-    torch.manual_seed(int(N * p)) # TODO: put in for testing
 
     num_edges = int(N * N * p)
 
