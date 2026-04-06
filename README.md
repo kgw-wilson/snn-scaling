@@ -1,5 +1,7 @@
 # SNN Scaling
 
+Status: all simulations running without errors and produce equivalent spike statistics for the same parameter values. The only exception to this is the neuromorphic simulation, which has been implemented but only runs in virtual mode since I do not have access to a board yet.
+
 ## Overview
 
 This repo is an experimental framework for studying the computational scaling properties of spiking neural network (SNN) simulations across hardware architectures.
