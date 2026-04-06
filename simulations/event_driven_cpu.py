@@ -6,7 +6,7 @@ from shared.monitoring import MonitoringWindow
 from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
-import simulations.event_driven.cpu_cpp as cpu_cpp
+import simulations.event_driven_cpu_cpp as cpu_cpp
 
 
 def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:

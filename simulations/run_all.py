@@ -3,12 +3,12 @@ import torch
 import pyNN.spiNNaker as p
 
 from shared.simulation_config import SimulationConfig
-from simulations.clock_driven.dense_cpu import clock_driven_dense_cpu
-from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
-from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
-from simulations.clock_driven.sparse_gpu import clock_driven_sparse_gpu
-from simulations.event_driven.cpu import event_driven_cpu
-from simulations.event_driven.neuromorphic import neuromorphic
+from simulations.clock_driven_dense_cpu import clock_driven_dense_cpu
+from simulations.clock_driven_dense_gpu import clock_driven_dense_gpu
+from simulations.clock_driven_sparse_cpu import clock_driven_sparse_cpu
+from simulations.clock_driven_sparse_gpu import clock_driven_sparse_gpu
+from simulations.event_driven_cpu import event_driven_cpu
+from simulations.neuromorphic import neuromorphic
 
 _CONNECTION_PROBS = [0.5]
 _NUM_NEURONS = [1000]

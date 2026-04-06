@@ -2,8 +2,8 @@ from pybind11.setup_helpers import Pybind11Extension, build_ext
 from setuptools import setup
 
 ext = Pybind11Extension(
-    "simulations.event_driven.cpu_cpp",
-    ["simulations/event_driven/cpu.cpp"],
+    "simulations.event_driven_cpu_cpp",
+    ["simulations/event_driven_cpu.cpp"],
     extra_compile_args=["-O3", "-march=native"],
 )
 
