@@ -24,7 +24,6 @@ def neuromorphic(sim_config: SimulationConfig, seed: int):
         i_offset=0.0,
     )
 
-    # Define separate population for
     pop_exc = p.Population(
         size=sim_config.num_neurons,
         cellclass=cellclass_instance,
