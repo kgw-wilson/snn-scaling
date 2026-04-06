@@ -103,23 +103,6 @@ class SimulationConfig:
                 f"connection probability must be in (0,1], got {self.connection_prob}"
             )
 
-        if not isinstance(self.device, torch.device):
-            raise TypeError(f"device must be a torch.device, got {type(self.device)}")
-        else:
-            if self.device.type == "cuda":
-                if not torch.cuda.is_available():
-                    raise ValueError("CUDA is not available on this system")
-                if (
-                    self.device.index is not None
-                    and self.device.index >= torch.cuda.device_count()
-                ):
-                    raise ValueError(f"CUDA device {self.device.index} not found")
-
-            elif self.device.type != "cpu":
-                raise ValueError(
-                    f"Only CUDA and CPU devices are supported, got {self.device}"
-                )
-
         if not isinstance(self.dtype, torch.dtype):
             raise ValueError(f"dtype must be a torch.dtype, got {type(self.dtype)}")
 

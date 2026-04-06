@@ -6,6 +6,7 @@ from shared.simulation_config import SimulationConfig
 from simulations.clock_driven.dense_cpu import clock_driven_dense_cpu
 from simulations.clock_driven.dense_gpu import clock_driven_dense_gpu
 from simulations.clock_driven.sparse_cpu import clock_driven_sparse_cpu
+from simulations.clock_driven.sparse_gpu import clock_driven_sparse_gpu
 from simulations.event_driven.cpu import event_driven_cpu
 from simulations.event_driven.neuromorphic import neuromorphic
 
@@ -20,7 +21,7 @@ _DEVICE_TO_SIMULATIONS = {
         event_driven_cpu,
         neuromorphic,
     ],
-    "gpu": [clock_driven_dense_gpu, clock_driven_sparse_cpu],
+    "gpu": [clock_driven_dense_gpu, clock_driven_sparse_gpu],
     "neuromorphic": [neuromorphic],
 }
 

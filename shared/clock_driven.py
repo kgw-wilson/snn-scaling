@@ -62,7 +62,7 @@ def build_sparse_weights_bucketized_by_delay(
     if use_numpy and device != torch.device("cpu"):
         raise ValueError("This function should only use numpy when running on CPU.")
 
-    weights = create_er_dense(config=sim_config)
+    weights = create_er_dense(sim_config)
 
     delay_bucket_indices, num_buckets = _compute_delay_buckets(sim_config)
 
