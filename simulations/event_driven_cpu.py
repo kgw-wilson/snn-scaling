@@ -25,7 +25,7 @@ def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:
     )
     last_update_times = np.full(sim_config.num_neurons, 0.0, dtype=np.float32)
     last_voltage_update_times = np.full(
-        sim_config.num_neurons, -sim_config.timestep, dtype=np.float32
+        sim_config.num_neurons, 0.0, dtype=np.float32
     )
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(sim_config)
 

@@ -174,7 +174,7 @@ public:
                     }
                     mv[i] = resting_voltage;
                     lst[i] = current_time;
-                    lvut[i] = current_time + refractory_period - 0.1e-3; // May need to slightly adjust (with -timestep) to exactly match clock-driven
+                    lvut[i] = current_time + refractory_period;
                     spn[i]++;
                     spb[int(current_time / bin_rate)]++;
                 }
