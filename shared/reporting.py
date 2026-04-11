@@ -14,16 +14,16 @@ def report_spike_statistics(
         spikes_per_bin: 1D tensor of shape [num_bins] with spike counts per time bin
     """
 
-    print("== Spike Statistics ==")
-    print(f"Total spikes: {spikes_per_neuron.sum().item()}")
-    print(f"Mean spikes per neuron: {spikes_per_neuron.mean().item():.2f}")
-    print(f"Std spikes per neuron: {spikes_per_neuron.std().item():.2f}")
-    print(f"Mean spikes per bin: {spikes_per_bin.mean().item():.2f}")
-    print(f"Std spikes per bin: {spikes_per_bin.std().item():.2f}")
-    print(f"Max spikes by a neuron: {spikes_per_neuron.max().item()}")
-    print(f"Min spikes by a neuron: {spikes_per_neuron.min().item()}")
-    print(f"Max spikes in a bin: {spikes_per_bin.max().item()}")
-    print(f"Min spikes in a bin: {spikes_per_bin.min().item()}")
+    # print("== Spike Statistics ==")
+    print(f"{spikes_per_neuron.sum().item()=}")
+    # print(f"Mean spikes per neuron: {spikes_per_neuron.mean().item():.2f}")
+    # print(f"Std spikes per neuron: {spikes_per_neuron.std().item():.2f}")
+    # print(f"Mean spikes per bin: {spikes_per_bin.mean().item():.2f}")
+    # print(f"Std spikes per bin: {spikes_per_bin.std().item():.2f}")
+    # print(f"Max spikes by a neuron: {spikes_per_neuron.max().item()}")
+    # print(f"Min spikes by a neuron: {spikes_per_neuron.min().item()}")
+    # print(f"Max spikes in a bin: {spikes_per_bin.max().item()}")
+    # print(f"Min spikes in a bin: {spikes_per_bin.min().item()}")
 
 
 def create_spike_reporting_tensors(

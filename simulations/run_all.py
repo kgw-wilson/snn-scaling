@@ -12,7 +12,7 @@ from simulations.neuromorphic import neuromorphic
 
 _CONNECTION_PROBS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
 _NUM_NEURONS = [10, 100, 1000, 10000]
-_NUM_REPEATS = 5
+_NUM_REPEATS = 1
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
@@ -38,11 +38,11 @@ if __name__ == "__main__":
 
                 for connection_prob in _CONNECTION_PROBS:
 
-                    for _ in range(_NUM_REPEATS):
+                    for repeat_i in range(_NUM_REPEATS):
 
                         print("===================")
                         print(
-                            f"Running {simulation.__name__} on {device} with {num_neurons=} and {connection_prob=}"
+                            f"{simulation.__name__}, {num_neurons=}, {connection_prob=}"
                         )
 
                         # Ensure same configuration always produces same seed
@@ -50,6 +50,7 @@ if __name__ == "__main__":
                             hash(
                                 (
                                     _BASE_SEED,
+                                    repeat_i,
                                     simulation.__name__,
                                     num_neurons,
                                     connection_prob,
