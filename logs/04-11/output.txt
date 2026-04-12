@@ -1,0 +1,439 @@
+The default PyNN timestep of 0.1 is less than 1(ms) that SpyNNaker is designed for. Consider including a timestep in your setup call.
+Unable to find config file in your home directory
+**********************************************************
+/root/.spynnaker.cfg has been created. 
+Please edit this file and change "machineName" to the IP address of your SpiNNaker board or change spalloc_server to the server urls and change "version" to the version of SpiNNaker hardware you are running on:
+***********************************************************
+
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.01
+Simulation main took 0.2609732151031494 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.05
+Simulation main took 0.20587968826293945 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.1
+Simulation main took 0.2126016616821289 seconds.
+spikes_per_neuron.sum().item()=6.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.2
+Simulation main took 0.2234969139099121 seconds.
+spikes_per_neuron.sum().item()=40.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.3
+Simulation main took 0.20068740844726562 seconds.
+spikes_per_neuron.sum().item()=74.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.4
+Simulation main took 0.20758533477783203 seconds.
+spikes_per_neuron.sum().item()=125.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.5
+Simulation main took 0.20214319229125977 seconds.
+spikes_per_neuron.sum().item()=138.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=0.75
+Simulation main took 0.21497058868408203 seconds.
+spikes_per_neuron.sum().item()=202.0
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.22522711753845215 seconds.
+spikes_per_neuron.sum().item()=237.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.01
+Simulation main took 0.2599477767944336 seconds.
+spikes_per_neuron.sum().item()=73.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.05
+Simulation main took 0.26119351387023926 seconds.
+spikes_per_neuron.sum().item()=1415.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.1
+Simulation main took 0.264636754989624 seconds.
+spikes_per_neuron.sum().item()=2417.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.2
+Simulation main took 0.28601622581481934 seconds.
+spikes_per_neuron.sum().item()=2692.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.3
+Simulation main took 0.25768184661865234 seconds.
+spikes_per_neuron.sum().item()=3077.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.4
+Simulation main took 0.2712676525115967 seconds.
+spikes_per_neuron.sum().item()=3481.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.5
+Simulation main took 0.27145934104919434 seconds.
+spikes_per_neuron.sum().item()=3785.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=0.75
+Simulation main took 0.2797257900238037 seconds.
+spikes_per_neuron.sum().item()=3955.0
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.274813175201416 seconds.
+spikes_per_neuron.sum().item()=4083.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.01
+Simulation main took 0.9524989128112793 seconds.
+spikes_per_neuron.sum().item()=24216.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.05
+Simulation main took 0.9256696701049805 seconds.
+spikes_per_neuron.sum().item()=37928.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.1
+Simulation main took 1.0303516387939453 seconds.
+spikes_per_neuron.sum().item()=40940.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.2
+Simulation main took 1.2612214088439941 seconds.
+spikes_per_neuron.sum().item()=43253.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.3
+Simulation main took 1.0710713863372803 seconds.
+spikes_per_neuron.sum().item()=44165.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.4
+Simulation main took 1.1794345378875732 seconds.
+spikes_per_neuron.sum().item()=45095.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.5
+Simulation main took 0.9359335899353027 seconds.
+spikes_per_neuron.sum().item()=45103.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=0.75
+Simulation main took 0.9295620918273926 seconds.
+spikes_per_neuron.sum().item()=46071.0
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.9294548034667969 seconds.
+spikes_per_neuron.sum().item()=46085.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.01
+Simulation main took 97.33633708953857 seconds.
+spikes_per_neuron.sum().item()=409473.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.05
+Simulation main took 97.16185569763184 seconds.
+spikes_per_neuron.sum().item()=451120.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.1
+Simulation main took 96.86340880393982 seconds.
+spikes_per_neuron.sum().item()=460731.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.2
+Simulation main took 97.16066241264343 seconds.
+spikes_per_neuron.sum().item()=470310.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.3
+Simulation main took 97.29367995262146 seconds.
+spikes_per_neuron.sum().item()=471214.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.4
+Simulation main took 97.79111289978027 seconds.
+spikes_per_neuron.sum().item()=480133.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.5
+Simulation main took 97.74355792999268 seconds.
+spikes_per_neuron.sum().item()=480179.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=0.75
+Simulation main took 97.1353087425232 seconds.
+spikes_per_neuron.sum().item()=480125.0
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=1
+Simulation main took 96.81902933120728 seconds.
+spikes_per_neuron.sum().item()=480098.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.01
+Simulation main took 0.43292856216430664 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.05
+Simulation main took 0.42773985862731934 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.1
+Simulation main took 0.44087672233581543 seconds.
+spikes_per_neuron.sum().item()=5.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.2
+Simulation main took 0.46288108825683594 seconds.
+spikes_per_neuron.sum().item()=41.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.3
+Simulation main took 0.42911243438720703 seconds.
+spikes_per_neuron.sum().item()=86.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.4
+Simulation main took 0.4279899597167969 seconds.
+spikes_per_neuron.sum().item()=120.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.5
+Simulation main took 0.42828917503356934 seconds.
+spikes_per_neuron.sum().item()=133.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=0.75
+Simulation main took 0.43340206146240234 seconds.
+spikes_per_neuron.sum().item()=202.0
+===================
+clock_driven_sparse_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.656074047088623 seconds.
+spikes_per_neuron.sum().item()=248.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.01
+Simulation main took 0.6167483329772949 seconds.
+spikes_per_neuron.sum().item()=66.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.05
+Simulation main took 0.6384060382843018 seconds.
+spikes_per_neuron.sum().item()=1482.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.1
+Simulation main took 0.6967577934265137 seconds.
+spikes_per_neuron.sum().item()=2423.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.2
+Simulation main took 0.5875144004821777 seconds.
+spikes_per_neuron.sum().item()=2774.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.3
+Simulation main took 0.45416831970214844 seconds.
+spikes_per_neuron.sum().item()=3103.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.4
+Simulation main took 0.5006101131439209 seconds.
+spikes_per_neuron.sum().item()=3578.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.5
+Simulation main took 0.47913193702697754 seconds.
+spikes_per_neuron.sum().item()=3774.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=0.75
+Simulation main took 0.45406341552734375 seconds.
+spikes_per_neuron.sum().item()=3948.0
+===================
+clock_driven_sparse_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.4758267402648926 seconds.
+spikes_per_neuron.sum().item()=4105.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.01
+Simulation main took 0.5180418491363525 seconds.
+spikes_per_neuron.sum().item()=24337.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.05
+Simulation main took 0.6218409538269043 seconds.
+spikes_per_neuron.sum().item()=38049.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.1
+Simulation main took 0.6113791465759277 seconds.
+spikes_per_neuron.sum().item()=40886.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.2
+Simulation main took 0.7058315277099609 seconds.
+spikes_per_neuron.sum().item()=43233.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.3
+Simulation main took 0.7895302772521973 seconds.
+spikes_per_neuron.sum().item()=44175.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.4
+Simulation main took 0.8636007308959961 seconds.
+spikes_per_neuron.sum().item()=45094.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.5
+Simulation main took 0.9586644172668457 seconds.
+spikes_per_neuron.sum().item()=45107.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=0.75
+Simulation main took 1.135155200958252 seconds.
+spikes_per_neuron.sum().item()=46048.0
+===================
+clock_driven_sparse_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 1.6293532848358154 seconds.
+spikes_per_neuron.sum().item()=46062.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.01
+Simulation main took 2.255370616912842 seconds.
+spikes_per_neuron.sum().item()=409535.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.05
+Simulation main took 5.333911418914795 seconds.
+spikes_per_neuron.sum().item()=451042.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.1
+Simulation main took 10.719051122665405 seconds.
+spikes_per_neuron.sum().item()=460727.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.2
+Simulation main took 20.015292644500732 seconds.
+spikes_per_neuron.sum().item()=470272.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.3
+Simulation main took 29.43945074081421 seconds.
+spikes_per_neuron.sum().item()=471570.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.4
+Simulation main took 39.12457203865051 seconds.
+spikes_per_neuron.sum().item()=480151.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.5
+Simulation main took 48.61063623428345 seconds.
+spikes_per_neuron.sum().item()=480193.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=0.75
+Simulation main took 71.29910206794739 seconds.
+spikes_per_neuron.sum().item()=480120.0
+===================
+clock_driven_sparse_cpu, num_neurons=10000, connection_prob=1
+Simulation main took 92.77823805809021 seconds.
+spikes_per_neuron.sum().item()=480112.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.01
+/content/snn-scaling/shared/graph_creation.py:100: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  weights_csr = weights_coo.coalesce().to_sparse_csr()
+Simulation main took 4.6253204345703125e-05 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.05
+Simulation main took 4.9591064453125e-05 seconds.
+spikes_per_neuron.sum().item()=12.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.1
+Simulation main took 6.532669067382812e-05 seconds.
+spikes_per_neuron.sum().item()=149.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.2
+Simulation main took 7.963180541992188e-05 seconds.
+spikes_per_neuron.sum().item()=187.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.3
+Simulation main took 0.00010561943054199219 seconds.
+spikes_per_neuron.sum().item()=203.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.4
+Simulation main took 0.0001697540283203125 seconds.
+spikes_per_neuron.sum().item()=207.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.5
+Simulation main took 0.0001354217529296875 seconds.
+spikes_per_neuron.sum().item()=215.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=0.75
+Simulation main took 0.00018405914306640625 seconds.
+spikes_per_neuron.sum().item()=220.0
+===================
+event_driven_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.00021409988403320312 seconds.
+spikes_per_neuron.sum().item()=207.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.01
+Simulation main took 0.0007710456848144531 seconds.
+spikes_per_neuron.sum().item()=1550.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.05
+Simulation main took 0.0014865398406982422 seconds.
+spikes_per_neuron.sum().item()=2089.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.1
+Simulation main took 0.0028586387634277344 seconds.
+spikes_per_neuron.sum().item()=2286.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.2
+Simulation main took 0.0057163238525390625 seconds.
+spikes_per_neuron.sum().item()=2619.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.3
+Simulation main took 0.008697032928466797 seconds.
+spikes_per_neuron.sum().item()=2741.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.4
+Simulation main took 0.012876510620117188 seconds.
+spikes_per_neuron.sum().item()=3107.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.5
+Simulation main took 0.018646717071533203 seconds.
+spikes_per_neuron.sum().item()=3482.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=0.75
+Simulation main took 0.0363459587097168 seconds.
+spikes_per_neuron.sum().item()=3751.0
+===================
+event_driven_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.04354977607727051 seconds.
+spikes_per_neuron.sum().item()=3886.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.01
+Simulation main took 0.03802752494812012 seconds.
+spikes_per_neuron.sum().item()=22830.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.05
+Simulation main took 0.2317333221435547 seconds.
+spikes_per_neuron.sum().item()=35270.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.1
+Simulation main took 0.5345280170440674 seconds.
+spikes_per_neuron.sum().item()=39249.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.2
+Simulation main took 1.5214860439300537 seconds.
+spikes_per_neuron.sum().item()=41241.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.3
+Simulation main took 2.4102816581726074 seconds.
+spikes_per_neuron.sum().item()=42427.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.4
+Simulation main took 2.910618305206299 seconds.
+spikes_per_neuron.sum().item()=43000.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.5
+Simulation main took 3.832231044769287 seconds.
+spikes_per_neuron.sum().item()=43838.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=0.75
+Simulation main took 6.757860898971558 seconds.
+spikes_per_neuron.sum().item()=44062.0
+===================
+event_driven_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 9.364497184753418 seconds.
+spikes_per_neuron.sum().item()=45000.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.01
+Simulation main took 7.995087623596191 seconds.
+spikes_per_neuron.sum().item()=393387.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.05
+Simulation main took 65.71261501312256 seconds.
+spikes_per_neuron.sum().item()=440000.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.1
+Simulation main took 164.19105529785156 seconds.
+spikes_per_neuron.sum().item()=450000.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.2
+Simulation main took 384.9178726673126 seconds.
+spikes_per_neuron.sum().item()=460000.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.3
+Simulation main took 595.8964235782623 seconds.
+spikes_per_neuron.sum().item()=460000.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.4
+Simulation main took 832.0636548995972 seconds.
+spikes_per_neuron.sum().item()=460000.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.5
+Simulation main took 1091.684870481491 seconds.
+spikes_per_neuron.sum().item()=460969.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=0.75
+Simulation main took 1724.038894891739 seconds.
+spikes_per_neuron.sum().item()=470000.0
+===================
+event_driven_cpu, num_neurons=10000, connection_prob=1
