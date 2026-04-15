@@ -437,3 +437,301 @@ Simulation main took 1724.038894891739 seconds.
 spikes_per_neuron.sum().item()=470000.0
 ===================
 event_driven_cpu, num_neurons=10000, connection_prob=1
+TIMEOUT
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.01
+Simulation main took 1.109830617904663 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.05
+Simulation main took 0.841151237487793 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.1
+Simulation main took 0.6912205219268799 seconds.
+spikes_per_neuron.sum().item()=7.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.2
+Simulation main took 0.6693167686462402 seconds.
+spikes_per_neuron.sum().item()=47.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.3
+Simulation main took 0.7586343288421631 seconds.
+spikes_per_neuron.sum().item()=92.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.4
+Simulation main took 0.6725120544433594 seconds.
+spikes_per_neuron.sum().item()=118.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.5
+Simulation main took 0.6636276245117188 seconds.
+spikes_per_neuron.sum().item()=138.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=0.75
+Simulation main took 0.6561434268951416 seconds.
+spikes_per_neuron.sum().item()=204.0
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=1
+Simulation main took 0.7039978504180908 seconds.
+spikes_per_neuron.sum().item()=236.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.01
+Simulation main took 0.6849682331085205 seconds.
+spikes_per_neuron.sum().item()=59.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.05
+Simulation main took 0.6609799861907959 seconds.
+spikes_per_neuron.sum().item()=1479.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.1
+Simulation main took 0.680941104888916 seconds.
+spikes_per_neuron.sum().item()=2441.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.2
+Simulation main took 0.6783647537231445 seconds.
+spikes_per_neuron.sum().item()=2800.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.3
+Simulation main took 0.6597945690155029 seconds.
+spikes_per_neuron.sum().item()=3047.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.4
+Simulation main took 0.7501504421234131 seconds.
+spikes_per_neuron.sum().item()=3526.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.5
+Simulation main took 0.8796966075897217 seconds.
+spikes_per_neuron.sum().item()=3751.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=0.75
+Simulation main took 0.9164531230926514 seconds.
+spikes_per_neuron.sum().item()=3961.0
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=1
+Simulation main took 0.7616147994995117 seconds.
+spikes_per_neuron.sum().item()=4139.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.01
+Simulation main took 0.7259707450866699 seconds.
+spikes_per_neuron.sum().item()=24296.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.05
+Simulation main took 0.7182736396789551 seconds.
+spikes_per_neuron.sum().item()=37917.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.1
+Simulation main took 0.724783182144165 seconds.
+spikes_per_neuron.sum().item()=40914.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.2
+Simulation main took 0.6999704837799072 seconds.
+spikes_per_neuron.sum().item()=43282.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.3
+Simulation main took 0.7204179763793945 seconds.
+spikes_per_neuron.sum().item()=44180.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.4
+Simulation main took 0.7127478122711182 seconds.
+spikes_per_neuron.sum().item()=45097.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.5
+Simulation main took 0.6990034580230713 seconds.
+spikes_per_neuron.sum().item()=45094.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=0.75
+Simulation main took 0.7022621631622314 seconds.
+spikes_per_neuron.sum().item()=46061.0
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.7193009853363037 seconds.
+spikes_per_neuron.sum().item()=46064.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.01
+Simulation main took 5.256051301956177 seconds.
+spikes_per_neuron.sum().item()=409053.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.05
+Simulation main took 5.2698400020599365 seconds.
+spikes_per_neuron.sum().item()=451117.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.1
+Simulation main took 5.293871164321899 seconds.
+spikes_per_neuron.sum().item()=460743.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.2
+Simulation main took 5.365051984786987 seconds.
+spikes_per_neuron.sum().item()=470236.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.3
+Simulation main took 5.364909410476685 seconds.
+spikes_per_neuron.sum().item()=471468.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.4
+Simulation main took 5.3635640144348145 seconds.
+spikes_per_neuron.sum().item()=480187.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.5
+Simulation main took 5.36425256729126 seconds.
+spikes_per_neuron.sum().item()=480181.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=0.75
+Simulation main took 5.379616022109985 seconds.
+spikes_per_neuron.sum().item()=480132.0
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=1
+Simulation main took 5.3398401737213135 seconds.
+spikes_per_neuron.sum().item()=480094.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.01
+/content/snn-scaling/shared/clock_driven.py:102: UserWarning: Sparse CSR tensor support is in beta state. If you miss a functionality in the sparse tensor support, please submit a feature request to https://github.com/pytorch/pytorch/issues. (Triggered internally at /pytorch/aten/src/ATen/SparseCsrTensorImpl.cpp:49.)
+  bucketized_weights.append(weights_coo.coalesce().to_sparse_csr())
+Simulation main took 0.8803238868713379 seconds.
+spikes_per_neuron.sum().item()=0.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.05
+Simulation main took 0.803591251373291 seconds.
+spikes_per_neuron.sum().item()=1.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.1
+Simulation main took 0.8411757946014404 seconds.
+spikes_per_neuron.sum().item()=7.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.2
+Simulation main took 0.8249845504760742 seconds.
+spikes_per_neuron.sum().item()=43.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.3
+Simulation main took 0.8305888175964355 seconds.
+spikes_per_neuron.sum().item()=108.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.4
+Simulation main took 0.8290271759033203 seconds.
+spikes_per_neuron.sum().item()=125.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.5
+Simulation main took 0.8310415744781494 seconds.
+spikes_per_neuron.sum().item()=154.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=0.75
+Simulation main took 0.907447338104248 seconds.
+spikes_per_neuron.sum().item()=193.0
+===================
+clock_driven_sparse_gpu, num_neurons=10, connection_prob=1
+Simulation main took 1.0732245445251465 seconds.
+spikes_per_neuron.sum().item()=253.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.01
+Simulation main took 1.1404941082000732 seconds.
+spikes_per_neuron.sum().item()=66.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.05
+Simulation main took 0.8351261615753174 seconds.
+spikes_per_neuron.sum().item()=1421.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.1
+Simulation main took 0.878558874130249 seconds.
+spikes_per_neuron.sum().item()=2389.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.2
+Simulation main took 0.8690788745880127 seconds.
+spikes_per_neuron.sum().item()=2764.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.3
+Simulation main took 0.8596320152282715 seconds.
+spikes_per_neuron.sum().item()=3097.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.4
+Simulation main took 0.846092700958252 seconds.
+spikes_per_neuron.sum().item()=3552.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.5
+Simulation main took 0.8290035724639893 seconds.
+spikes_per_neuron.sum().item()=3745.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=0.75
+Simulation main took 0.8636491298675537 seconds.
+spikes_per_neuron.sum().item()=3937.0
+===================
+clock_driven_sparse_gpu, num_neurons=100, connection_prob=1
+Simulation main took 0.8308770656585693 seconds.
+spikes_per_neuron.sum().item()=4083.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.01
+Simulation main took 0.8549404144287109 seconds.
+spikes_per_neuron.sum().item()=24257.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.05
+Simulation main took 0.8380782604217529 seconds.
+spikes_per_neuron.sum().item()=38277.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.1
+Simulation main took 0.860792875289917 seconds.
+spikes_per_neuron.sum().item()=40910.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.2
+Simulation main took 1.0400643348693848 seconds.
+spikes_per_neuron.sum().item()=43294.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.3
+Simulation main took 1.152890682220459 seconds.
+spikes_per_neuron.sum().item()=44163.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.4
+Simulation main took 1.1091139316558838 seconds.
+spikes_per_neuron.sum().item()=45091.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.5
+Simulation main took 0.8741164207458496 seconds.
+spikes_per_neuron.sum().item()=45108.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=0.75
+Simulation main took 0.9004936218261719 seconds.
+spikes_per_neuron.sum().item()=46054.0
+===================
+clock_driven_sparse_gpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.9018218517303467 seconds.
+spikes_per_neuron.sum().item()=46078.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.01
+Simulation main took 1.26226806640625 seconds.
+spikes_per_neuron.sum().item()=409337.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.05
+Simulation main took 1.1296982765197754 seconds.
+spikes_per_neuron.sum().item()=451091.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.1
+Simulation main took 1.3448262214660645 seconds.
+spikes_per_neuron.sum().item()=460761.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.2
+Simulation main took 1.821136713027954 seconds.
+spikes_per_neuron.sum().item()=470314.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.3
+Simulation main took 2.3119916915893555 seconds.
+spikes_per_neuron.sum().item()=471546.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.4
+Simulation main took 2.983931541442871 seconds.
+spikes_per_neuron.sum().item()=480165.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.5
+Simulation main took 3.464346408843994 seconds.
+spikes_per_neuron.sum().item()=480209.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=0.75
+Simulation main took 4.638654947280884 seconds.
+spikes_per_neuron.sum().item()=480112.0
+===================
+clock_driven_sparse_gpu, num_neurons=10000, connection_prob=1
+Simulation main took 5.78565788269043 seconds.
+spikes_per_neuron.sum().item()=480094.0
+===================
+All simulations completed.
+
+!WARNING: 1 log messages were generated at level WARNING or above.
+This may mean that the results are invalid.
+These are:
+The default PyNN timestep of 0.1 is less than 1(ms) that SpyNNaker is designed for. Consider including a timestep in your setup call.
