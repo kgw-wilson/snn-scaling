@@ -19,17 +19,16 @@ def create_state_variables(
 
     num_neurons = sim_config.num_neurons
     device = sim_config.device
-    dtype = sim_config.dtype
     resting_voltage = sim_config.resting_voltage
 
     membrane_voltages = torch.full(
-        (num_neurons,), resting_voltage, device=device, dtype=dtype
+        (num_neurons,), resting_voltage, device=device, dtype=torch.float32
     )
-    synaptic_currents = torch.zeros(num_neurons, device=device, dtype=dtype)
+    synaptic_currents = torch.zeros(num_neurons, device=device, dtype=torch.float32)
 
     # Initialize to -inf to allow immediate firing
     last_spike_times = torch.full(
-        (num_neurons,), -torch.inf, device=device, dtype=dtype
+        (num_neurons,), -torch.inf, device=device, dtype=torch.float32
     )
 
     return membrane_voltages, synaptic_currents, last_spike_times

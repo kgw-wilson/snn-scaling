@@ -16,6 +16,8 @@ def clock_driven_dense_cpu(sim_config: SimulationConfig, seed: int) -> None:
 
     torch.manual_seed(seed)
 
+    timestep = sim_config.timestep
+    timesteps_per_bin = sim_config.timesteps_per_bin
     resistance = sim_config.resistance
     resting_voltage = sim_config.resting_voltage
     threshold_voltage = sim_config.threshold_voltage
@@ -27,55 +29,63 @@ def clock_driven_dense_cpu(sim_config: SimulationConfig, seed: int) -> None:
 
     bucketized_weights = build_dense_weights_bucketized_by_delay(sim_config)
 
-    ring_buffer = create_ring_buffer(sim_config)
+    ring_buffer, buffer_size = create_ring_buffer(sim_config)
 
     membrane_voltages, synaptic_currents, last_spike_times = create_state_variables(
         sim_config
     )
 
-    random_noise, spikes_float = create_spike_tensors(sim_config)
 
     (
         timestep_indices,
-        timestep_values,
-        bin_indices,
-        buffer_indices,
+        buffer_index,
         bucket_indices_in_buffer,
     ) = create_lookup_tensors(sim_config)
 
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(sim_config)
 
+    random_noise = torch.empty(
+        sim_config.num_neurons, device=sim_config.device, dtype=torch.float32
+    )
+    one_minus_decay = 1.0 - membrane_decay
+
     with MonitoringWindow("Simulation main"):
 
         for t in timestep_indices:
 
-            current_time = timestep_values[t]
-            buffer_idx = buffer_indices[t]
+            current_time = t * timestep
+            buffer_index = (buffer_index + 1) % buffer_size
+            bin_idx = t // timesteps_per_bin
 
             random_noise.uniform_()
 
             synaptic_currents *= synaptic_decay
-            synaptic_currents += ring_buffer[buffer_idx]
+            synaptic_currents += ring_buffer[buffer_index]
             synaptic_currents += poisson_weight * (random_noise < poisson_prob)
 
             outside_refractory = (current_time - last_spike_times) >= refractory_period
 
             alpha = synaptic_currents * resistance + resting_voltage
-            new_voltages = alpha + (membrane_voltages - alpha) * membrane_decay
-            membrane_voltages[outside_refractory] = new_voltages[outside_refractory]
-
-            spikes_bool = membrane_voltages >= threshold_voltage
-            spikes_float.copy_(spikes_bool)
-
-            ring_buffer[bucket_indices_in_buffer[t]] += (
-                bucketized_weights @ spikes_float
+            new_voltages = alpha * one_minus_decay + membrane_voltages * membrane_decay
+            membrane_voltages = torch.where(
+                outside_refractory, new_voltages, membrane_voltages
             )
 
-            ring_buffer[buffer_idx].zero_()
-            membrane_voltages[spikes_bool] = resting_voltage
-            last_spike_times[spikes_bool] = current_time
+            spikes_bool = membrane_voltages >= threshold_voltage
 
-            spikes_per_neuron += spikes_float
-            spikes_per_bin[bin_indices[t]] += spikes_float.sum()
+            ring_buffer.index_add_(
+                0,
+                bucket_indices_in_buffer[t],
+                bucketized_weights @ spikes_bool.to(torch.float32),
+            )
+
+            ring_buffer[buffer_index].zero_()
+            membrane_voltages = torch.where(
+                spikes_bool, resting_voltage, membrane_voltages
+            )
+            last_spike_times = torch.where(spikes_bool, current_time, last_spike_times)
+
+            spikes_per_neuron += spikes_bool
+            spikes_per_bin[bin_idx] += spikes_bool.sum()
 
     report_spike_statistics(spikes_per_neuron, spikes_per_bin)

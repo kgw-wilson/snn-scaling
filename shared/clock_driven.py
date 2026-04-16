@@ -22,7 +22,6 @@ def build_dense_weights_bucketized_by_delay(
     """
 
     num_neurons = sim_config.num_neurons
-    dtype = sim_config.dtype
     device = sim_config.device
 
     weights = create_er_dense(sim_config)
@@ -30,7 +29,7 @@ def build_dense_weights_bucketized_by_delay(
     delay_bucket_indices, num_buckets = _compute_delay_buckets(sim_config)
 
     bucketized_weights = torch.zeros(
-        (num_buckets, num_neurons, num_neurons), device=device, dtype=dtype
+        (num_buckets, num_neurons, num_neurons), device=device, dtype=torch.float32
     )
     for bucket_idx in range(num_buckets):
         mask = delay_bucket_indices == bucket_idx
@@ -56,7 +55,6 @@ def build_sparse_weights_bucketized_by_delay(
     """
 
     num_neurons = sim_config.num_neurons
-    dtype = sim_config.dtype
     device = sim_config.device
 
     if use_numpy and device != torch.device("cpu"):
@@ -97,24 +95,25 @@ def build_sparse_weights_bucketized_by_delay(
                 vals,
                 size=(num_neurons, num_neurons),
                 device=device,
-                dtype=dtype,
+                dtype=torch.float32,
             )
             bucketized_weights.append(weights_coo.coalesce().to_sparse_csr())
 
     return bucketized_weights, num_buckets
 
 
-def create_ring_buffer(sim_config: SimulationConfig) -> torch.Tensor:
+def create_ring_buffer(sim_config: SimulationConfig) -> tuple[torch.Tensor, int]:
     """
     Create a circular buffer used to store delayed synaptic inputs
 
     Returns:
         ring_buffer - tensor of shape [buffer_size, num_neurons]
+
+        buffer_size - int
     """
 
     num_neurons = sim_config.num_neurons
     device = sim_config.device
-    dtype = sim_config.dtype
     max_delay = sim_config.max_delay
     timestep = sim_config.timestep
 
@@ -123,10 +122,10 @@ def create_ring_buffer(sim_config: SimulationConfig) -> torch.Tensor:
         buffer_size,
         num_neurons,
         device=device,
-        dtype=dtype,
+        dtype=torch.float32,
     )
 
-    return ring_buffer
+    return ring_buffer, buffer_size
 
 
 def create_spike_tensors(sim_config: SimulationConfig) -> torch.Tensor:
@@ -137,21 +136,20 @@ def create_spike_tensors(sim_config: SimulationConfig) -> torch.Tensor:
     using .uniform_() and then used to generate the external spikes for a
     timestep by comparing to poisson_prob. spikes_float is allocated here
     and should be updated by copying spikes_bool into it because that
-    avoids allocating new tensors with spikes_bool.to(dtype) within the
-    simulation loop.
+    avoids allocating new tensors with spikes_bool.to(torch.float32) within
+    the simulation loop.
 
     Returns:
-        random_noise - empty tensor [num_neurons] with dtype from sim_config
+        random_noise - empty float tensor [num_neurons]
 
-        spikes_float - empty tensor [num_neurons] with dtype from sim_config.
+        spikes_float - empty float tensor [num_neurons]
     """
 
     num_neurons = sim_config.num_neurons
     device = sim_config.device
-    dtype = sim_config.dtype
 
-    random_noise = torch.empty(num_neurons, device=device, dtype=dtype)
-    spikes_float = torch.empty(num_neurons, device=device, dtype=dtype)
+    random_noise = torch.empty(num_neurons, device=device, dtype=torch.float32)
+    spikes_float = torch.empty(num_neurons, device=device, dtype=torch.float32)
 
     return random_noise, spikes_float
 
@@ -162,27 +160,22 @@ def create_lookup_tensors(
     """
     Tensors used to quickly lookup values based on timestep index
 
+    In the case of timestep values, bin indices, and buffer indices, these are computed
+    on the fly in the simulation loop using simple computation on the timestep index
+    because that is probably faster than memory access (and allocates less memory).
+
     Returns:
         timestep_indices - int tensor [num_timesteps] stores each timestep index
 
-        timestep_values - tensor [num_timesteps] with dtype from sim_config
-            maps timestep indices to their actual time value
-
-        bin_indices - int tensor [num_timesteps] maps timestep to its
-            corresponding bin used to report spike statistics
-
-        buffer_indices - int tensor [num_timesteps] maps timestep to its
-            index in the ring buffer
+        buffer_index - 0-dim int tensor stores initial value of buffer index
 
         bucket_indices_in_buffer - [num_timesteps, num_buckets] maps a timestep
             to offsets to correctly schedule generated current into the ring buffer
     """
 
-    dtype = sim_config.dtype
     device = sim_config.device
     num_timesteps = sim_config.num_timesteps
     timestep = sim_config.timestep
-    timesteps_per_bin = sim_config.timesteps_per_bin
     max_delay = sim_config.max_delay
     min_delay = sim_config.min_delay
 
@@ -190,9 +183,8 @@ def create_lookup_tensors(
     min_delay_steps = int(min_delay / timestep)
 
     timestep_indices = torch.arange(0, num_timesteps, device=device)
-    timestep_values = timestep_indices.to(dtype) * timestep
-    bin_indices = timestep_indices // timesteps_per_bin
-    buffer_indices = timestep_indices % buffer_size
+
+    buffer_index = torch.tensor(0, dtype=torch.int32, device=device)
 
     bucket_offsets = torch.arange(min_delay_steps, buffer_size, device=device)
     bucket_indices_in_buffer = (
@@ -201,9 +193,7 @@ def create_lookup_tensors(
 
     return (
         timestep_indices,
-        timestep_values,
-        bin_indices,
-        buffer_indices,
+        buffer_index,
         bucket_indices_in_buffer,
     )
 
@@ -212,15 +202,30 @@ def _compute_delay_buckets(sim_config: SimulationConfig) -> tuple[torch.Tensor, 
     """
     Compute delay bucket indices and metadata shared across dense and sparse builds
 
+    Delays are sampled from uniform distribution. 
+
+    Subtract 1 because torch.bucketize returns indices in the range
+    [0, len(boundaries)], where index 0 corresponds to values strictly less
+    than the first boundary. Since valid delays start at or above
+    bucket_0_offset * timestep, the resulting indices will always be >= 1
+    before shifting.
+
+    No clamping is required because delays are guaranteed to be within the
+    valid range [bucket_0_offset * timestep, max_delay_steps * timestep),
+    so they will never fall outside the defined bucket boundaries.
+
+    `right=True` ensures that values exactly equal to a boundary are placed
+    in the correct bucket. In the special case where
+    `min_delay == max_delay == timestep`, all values correctly map to bucket 0.
+
     Returns:
-        delay_bucket_indices: torch.Tensor of shape [num_neurons, num_neurons] mapping
+        delay_bucket_indices: float tensor [num_neurons, num_neurons] mapping
             each connection to a delay bucket
 
         num_buckets: Total number of delay buckets
     """
 
     num_neurons = sim_config.num_neurons
-    dtype = sim_config.dtype
     device = sim_config.device
     timestep = sim_config.timestep
     min_delay = sim_config.min_delay
@@ -236,15 +241,9 @@ def _compute_delay_buckets(sim_config: SimulationConfig) -> tuple[torch.Tensor, 
         device=device,
     )
 
-    # Sample delays per connection using a uniform distribution
-    delays = torch.empty(num_neurons, num_neurons, device=device, dtype=dtype)
+    delays = torch.empty(num_neurons, num_neurons, device=device, dtype=torch.float32)
     delays.uniform_(min_delay, max_delay)
 
-    # Subtract by 1 because bucket values start at 0 for values less than the
-    # first timestep boundary. Delays will never be
-    # lower than bucket_0_offset * timestep and thus will always be at least at
-    # bucket 1. Similarly, no need to clamp because no delay will be greater
-    # than or equal to max_delay_steps * timestep.
     delay_bucket_indices = torch.bucketize(delays, timestep_boundaries, right=True) - 1
 
     num_buckets = max_delay_steps - bucket_0_offset

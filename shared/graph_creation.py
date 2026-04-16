@@ -29,7 +29,7 @@ def create_er_dense(sim_config: SimulationConfig) -> torch.Tensor:
         (sim_config.num_neurons, sim_config.num_neurons),
         fill_value=sim_config.recurrent_weight,
         device=sim_config.device,
-        dtype=sim_config.dtype,
+        dtype=torch.float32,
     )
 
     all_indices = torch.arange(N * N, device=sim_config.device)
@@ -74,7 +74,6 @@ def create_er_sparse(
     N = sim_config.num_neurons
     p = sim_config.connection_prob
     device = sim_config.device
-    dtype = sim_config.dtype
 
     num_edges = int(N * N * p)
 
@@ -87,7 +86,7 @@ def create_er_sparse(
         (num_edges,),
         fill_value=sim_config.recurrent_weight,
         device=device,
-        dtype=dtype,
+        dtype=torch.float32,
     )
 
     weights_coo = torch.sparse_coo_tensor(
@@ -95,7 +94,7 @@ def create_er_sparse(
         values,
         size=(N, N),
         device=device,
-        dtype=dtype,
+        dtype=torch.float32,
     )
     weights_csr = weights_coo.coalesce().to_sparse_csr()
 

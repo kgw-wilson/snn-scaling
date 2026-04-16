@@ -10,9 +10,10 @@ def report_spike_statistics(
     Print spike statistics after a simulation run
 
     Args:
-        spikes_per_neuron: 1D tensor of shape [num_neurons] with spike counts per neuron
-        spikes_per_bin: 1D tensor of shape [num_bins] with spike counts per time bin
+        spikes_per_neuron: int tensor of shape [num_neurons] with spike counts per neuron
+        spikes_per_bin: int tensor of shape [num_bins] with spike counts per time bin
     """
+    # TODO: convert to float
 
     # print("== Spike Statistics ==")
     print(f"{spikes_per_neuron.sum().item()=}")
@@ -37,19 +38,19 @@ def create_spike_reporting_tensors(
     spike counts.
 
     Returns:
-        spikes_per_neuron - [num_neurons] tracking total spike count per neuron
-            over the full simulation duration
+        spikes_per_neuron - int tensor [num_neurons] tracking total spike
+            count per neuron over the full simulation duration
 
-        spikes_per_bin - [num_bins] tracking aggregated spike activity over
-            coarse time bins (useful for population firing rate analysis)
+        spikes_per_bin - int tensor [num_bins] tracking aggregated spike
+            activity over coarse time bins (useful for population firing
+            rate analysis)
     """
 
     num_neurons = sim_config.num_neurons
     device = sim_config.device
-    dtype = sim_config.dtype
     num_bins = sim_config.num_bins
 
-    spikes_per_neuron = torch.zeros(num_neurons, device=device, dtype=dtype)
-    spikes_per_bin = torch.zeros(num_bins, device=device, dtype=dtype)
+    spikes_per_neuron = torch.zeros(num_neurons, device=device, dtype=torch.int32)
+    spikes_per_bin = torch.zeros(num_bins, device=device, dtype=torch.int32)
 
     return spikes_per_neuron, spikes_per_bin

@@ -22,7 +22,6 @@ class SimulationConfig:
     num_neurons: int
     connection_prob: float
     device_str: str
-    dtype: torch.dtype
     timestep: float
     simulation_time: float
     resistance: float
@@ -39,7 +38,7 @@ class SimulationConfig:
     refractory_period: float
 
     @property
-    def device(self) -> torch.device:
+    def device(self) -> torch.device | None:
         if self.device_str == "cpu":
             return torch.device("cpu")
         if self.device_str == "gpu":
@@ -102,9 +101,6 @@ class SimulationConfig:
             raise ValueError(
                 f"connection probability must be in (0,1], got {self.connection_prob}"
             )
-
-        if not isinstance(self.dtype, torch.dtype):
-            raise ValueError(f"dtype must be a torch.dtype, got {type(self.dtype)}")
 
         if not isinstance(self.timestep, float) or self.timestep <= 0:
             raise ValueError(f"timestep must be positive float, got {self.timestep}")

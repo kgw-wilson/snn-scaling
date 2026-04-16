@@ -1,28 +1,30 @@
 import math
-import torch
 
 from shared.simulation_config import SimulationConfig
 from shared.utils import get_available_devices
-from simulations.clock_driven_dense_cpu import clock_driven_dense_cpu
-from simulations.clock_driven_dense_gpu import clock_driven_dense_gpu
-from simulations.clock_driven_sparse_cpu import clock_driven_sparse_cpu
-from simulations.clock_driven_sparse_gpu import clock_driven_sparse_gpu
-from simulations.event_driven_cpu import event_driven_cpu
-from simulations.neuromorphic import neuromorphic
+from simulations.clock_driven_dense_cpu.eager import clock_driven_dense_cpu as eager_cpu
+from simulations.clock_driven_dense_cpu.compiled import clock_driven_dense_cpu_compiled as compiled_cpu
+from simulations.clock_driven_dense_gpu.runner import clock_driven_dense_gpu as eager_gpu
+from simulations.clock_driven_dense_gpu.compiled import clock_driven_dense_gpu_compiled as compiled_gpu
+# from simulations.clock_driven_sparse_cpu.runner import clock_driven_sparse_cpu
+# from simulations.clock_driven_sparse_gpu.runner import clock_driven_sparse_gpu
+# from simulations.event_driven.runner import event_driven_cpu
+# from simulations.neuromorphic.runner import neuromorphic
 
-_CONNECTION_PROBS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
-_NUM_NEURONS = [10, 100, 1000, 10000]
-_NUM_REPEATS = 1
+_CONNECTION_PROBS = [1] # [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
+_NUM_NEURONS = [10,100,1000,10000] #[10, 100, 1000, 10000]
+_NUM_REPEATS = 5
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     "cpu": [
-        clock_driven_dense_cpu,
-        clock_driven_sparse_cpu,
-        event_driven_cpu,
+        eager_cpu,
+        compiled_cpu,
+        # clock_driven_sparse_cpu,
+        # event_driven_cpu,
     ],
-    "gpu": [clock_driven_dense_gpu, clock_driven_sparse_gpu],
-    "neuromorphic": [neuromorphic],
+    "gpu": [eager_gpu, compiled_gpu],
+    "neuromorphic": [] # [neuromorphic],
 }
 
 
@@ -74,7 +76,6 @@ if __name__ == "__main__":
                             num_neurons=num_neurons,
                             connection_prob=connection_prob,
                             device_str=device,
-                            dtype=torch.float32,
                             timestep=1e-3,
                             simulation_time=1e-3 * 1000,
                             resistance=10.0,
