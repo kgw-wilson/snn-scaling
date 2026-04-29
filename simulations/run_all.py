@@ -4,7 +4,7 @@ from shared.simulation_config import SimulationConfig
 from shared.utils import get_available_devices
 from simulations.clock_driven_dense_cpu.eager import clock_driven_dense_cpu as eager_cpu
 from simulations.clock_driven_dense_cpu.compiled import clock_driven_dense_cpu_compiled as compiled_cpu
-from simulations.clock_driven_dense_gpu.runner import clock_driven_dense_gpu as eager_gpu
+from simulations.clock_driven_dense_gpu.eager import clock_driven_dense_gpu as eager_gpu
 from simulations.clock_driven_dense_gpu.compiled import clock_driven_dense_gpu_compiled as compiled_gpu
 # from simulations.clock_driven_sparse_cpu.runner import clock_driven_sparse_cpu
 # from simulations.clock_driven_sparse_gpu.runner import clock_driven_sparse_gpu

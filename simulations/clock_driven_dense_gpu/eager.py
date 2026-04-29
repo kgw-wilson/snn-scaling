@@ -39,9 +39,7 @@ def clock_driven_dense_gpu(sim_config: SimulationConfig, seed: int) -> None:
 
     (
         timestep_indices,
-        timestep_values,
-        bin_indices,
-        buffer_indices,
+        _,
         bucket_indices_in_buffer,
     ) = create_lookup_tensors(sim_config)
 

@@ -48,6 +48,9 @@ def clock_driven_dense_gpu_compiled(sim_config: SimulationConfig, seed: int) -> 
 
     one_minus_decay = 1.0 - membrane_decay
 
+    buffer_slice = torch.zeros_like(ring_buffer[0])
+
+
     simulate_fn = torch.compile(
         _simulate,
         backend="inductor",
@@ -66,6 +69,7 @@ def clock_driven_dense_gpu_compiled(sim_config: SimulationConfig, seed: int) -> 
             random_noise,
             synaptic_decay,
             ring_buffer,
+            buffer_slice,
             poisson_weight,
             poisson_prob,
             last_spike_times,
@@ -94,6 +98,7 @@ def _simulate(
     random_noise: torch.Tensor,
     synaptic_decay: float,
     ring_buffer: torch.Tensor,
+    buffer_slice: torch.Tensor,
     poisson_weight: float,
     poisson_prob: float,
     last_spike_times: torch.Tensor,
@@ -146,7 +151,13 @@ def _simulate(
             bucketized_weights @ spikes_bool.to(torch.float32),
         )
 
-        ring_buffer[buffer_index].zero_()
+        buffer_slice.copy_(ring_buffer[buffer_index])
+
+        ring_buffer.index_add_(
+            0,
+            buffer_index,
+            -buffer_slice,
+        )
 
         membrane_voltages = torch.where(
             spikes_bool,
