@@ -9,7 +9,7 @@ from shared.monitoring import MonitoringWindow
 from shared.reporting import report_statistics, create_spike_reporting_tensors
 from shared.utils import create_state_variables
 from simulations.clock_driven_sparse_gpu.backend import (
-    ClockDrivenSparseGpuSimulation as Simulation,
+    ClockDrivenSparseCpuSimulation as Simulation,
 )
 
 
