@@ -13,6 +13,7 @@
 
 namespace py = pybind11;
 
+using CsrMatrix = std::tuple<py::array_t<float>, py::array_t<int>, py::array_t<int>>;
 using CsrMatrixList = std::vector<CsrMatrix>;
 
 volatile sig_atomic_t timed_out = 0;

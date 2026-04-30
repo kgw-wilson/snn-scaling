@@ -50,6 +50,12 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
+If running sparse cpu simulation, you will need Intel's mkl library:
+
+```shell
+conda install mkl mkl-include
+```
+
 Before running `python -m simulations.run_all`, the event-driven C++ backend will need to be compiled with:
 
 ```shell
