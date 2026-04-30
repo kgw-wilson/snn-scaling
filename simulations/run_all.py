@@ -16,7 +16,7 @@ _DEVICE_TO_SIMULATIONS = {
     "cpu": [
         # clock_driven_dense,
         # clock_driven_sparse_cpu,
-        event_driven_cpu,
+        # event_driven_cpu,
     ],
     "gpu": [
         # clock_driven_dense,

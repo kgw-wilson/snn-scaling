@@ -59,7 +59,7 @@ def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:
     if not result["timed_out"]:
         report_statistics(
             sim_config,
-            "clock_driven_dense",
+            "event_driven",
             monitor.elapsed_time,
             torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
             torch.tensor(result["spikes_per_bin"], dtype=torch.float32),

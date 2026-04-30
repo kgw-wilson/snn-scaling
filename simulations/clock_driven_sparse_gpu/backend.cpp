@@ -16,7 +16,7 @@ class ClockDrivenSparseGpuSimulation
 {
 public:
     torch::Tensor bucket_indices_in_buffer;
-    torch::Tensor bucketized_weights;
+    std::vector<torch::Tensor> bucketized_weights;
 
     torch::Tensor membrane_voltages;
     torch::Tensor synaptic_currents;
@@ -45,7 +45,7 @@ public:
 
     ClockDrivenSparseGpuSimulation(
         torch::Tensor bucket_indices_in_buffer,
-        torch::Tensor bucketized_weights,
+        std::vector<torch::Tensor> bucketized_weights,
         torch::Tensor membrane_voltages,
         torch::Tensor synaptic_currents,
         torch::Tensor last_spike_times,
@@ -157,7 +157,7 @@ PYBIND11_MODULE(backend, m)
     py::class_<ClockDrivenSparseGpuSimulation>(m, "ClockDrivenSparseGpuSimulation")
         .def(py::init<
                  torch::Tensor,
-                 torch::Tensor,
+                 std::vector<torch::Tensor>,
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,

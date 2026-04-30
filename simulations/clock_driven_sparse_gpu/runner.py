@@ -69,7 +69,7 @@ def clock_driven_sparse_gpu(sim_config: SimulationConfig, seed: int) -> None:
     if not result["timed_out"]:
         report_statistics(
             sim_config,
-            "clock_driven_dense",
+            "clock_driven_sparse_gpu",
             monitor.elapsed_time,
             torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
             torch.tensor(result["spikes_per_bin"], dtype=torch.float32),
