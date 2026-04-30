@@ -136,7 +136,7 @@ public:
                 ring_buffer.index_add_(
                     0,
                     index_tensor,
-                    torch::mv(bucketized_weights[bucket_idx], spikes_bool.to(torch::kFloat32)))
+                    torch::mv(bucketized_weights[bucket_idx], spikes_bool.to(torch::kFloat32)));
             }
 
             ring_buffer[buffer_index].zero_();
