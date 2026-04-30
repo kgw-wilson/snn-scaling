@@ -1,3 +1,4 @@
+func_name,elapsed_time,device_str,num_neurons,connection_prob,timestep,min_delay,max_delay,mean_spikes_per_neuron,mean_spikes_per_bin
 clock_driven_dense,0.13630080223083496,cpu,10,0.01,0.001,0.002,0.004,0.0,0.0
 clock_driven_dense,0.13396954536437988,cpu,10,0.05,0.001,0.002,0.004,0.0,0.0
 clock_driven_dense,0.11610817909240723,cpu,10,0.1,0.001,0.002,0.004,0.4000000059604645,0.03999999910593033
