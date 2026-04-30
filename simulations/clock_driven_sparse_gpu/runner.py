@@ -39,6 +39,8 @@ def clock_driven_sparse_gpu(sim_config: SimulationConfig, seed: int) -> None:
     sim = Simulation(
         bucket_indices_in_buffer=bucket_indices_in_buffer,
         bucketized_weights=bucketized_weights,
+        random_noise=torch.empty_like(membrane_voltages),
+        index_tensor=torch.empty((1), device=sim_config.device, dtype=torch.int32),
         membrane_voltages=membrane_voltages,
         synaptic_currents=synaptic_currents,
         last_spike_times=last_spike_times,

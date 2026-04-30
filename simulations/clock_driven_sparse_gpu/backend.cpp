@@ -17,7 +17,8 @@ class ClockDrivenSparseGpuSimulation
 public:
     torch::Tensor bucket_indices_in_buffer;
     std::vector<torch::Tensor> bucketized_weights;
-
+    torch::Tensor random_noise;
+    torch::Tensor index_tensor;
     torch::Tensor membrane_voltages;
     torch::Tensor synaptic_currents;
     torch::Tensor last_spike_times;
@@ -46,6 +47,8 @@ public:
     ClockDrivenSparseGpuSimulation(
         torch::Tensor bucket_indices_in_buffer,
         std::vector<torch::Tensor> bucketized_weights,
+        torch::Tensor random_noise,
+        torch::Tensor index_tensor,
         torch::Tensor membrane_voltages,
         torch::Tensor synaptic_currents,
         torch::Tensor last_spike_times,
@@ -70,6 +73,8 @@ public:
         float threshold_voltage)
         : bucket_indices_in_buffer(bucket_indices_in_buffer),
           bucketized_weights(bucketized_weights),
+          random_noise(random_noise),
+          index_tensor(index_tensor),
           membrane_voltages(membrane_voltages),
           synaptic_currents(synaptic_currents),
           last_spike_times(last_spike_times),
@@ -103,8 +108,6 @@ public:
                { timed_out = 1; });
         alarm(max_runtime);
 
-        torch::Tensor random_noise = torch::empty_like(membrane_voltages);
-        torch::Tensor all_results = torch::zeros({num_buckets, num_neurons});
         int buffer_index = 0;
 
         for (int t = 0; t < num_timesteps && !timed_out; t++)
@@ -126,15 +129,16 @@ public:
             membrane_voltages = torch::where(outside_refractory, new_voltages, membrane_voltages);
 
             torch::Tensor spikes_bool = membrane_voltages >= threshold_voltage;
-            torch::Tensor spikes_float = spikes_bool.to(torch::kFloat32);
 
             for (int bucket_idx = 0; bucket_idx < num_buckets; bucket_idx++)
             {
-                all_results[bucket_idx] = torch::mv(
-                    bucketized_weights[bucket_idx], spikes_float);
+                index_tensor[0] = bucket_indices_in_buffer[t][bucket_idx];
+                ring_buffer.index_add_(
+                    0,
+                    index_tensor,
+                    torch::mv(bucketized_weights[bucket_idx], spikes_bool.to(torch::kFloat32)))
             }
 
-            ring_buffer.index_add_(0, bucket_indices_in_buffer[t], all_results);
             ring_buffer[buffer_index].zero_();
             membrane_voltages = torch::where(spikes_bool, resting_voltage, membrane_voltages);
             last_spike_times = torch::where(spikes_bool, current_time, last_spike_times);
@@ -164,6 +168,8 @@ PYBIND11_MODULE(backend, m)
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
                  int,
                  int,
                  int,
@@ -182,6 +188,8 @@ PYBIND11_MODULE(backend, m)
                  float>(),
              py::arg("bucket_indices_in_buffer"),
              py::arg("bucketized_weights"),
+             py::arg("random_noise"),
+             py::arg("index_tensor"),
              py::arg("membrane_voltages"),
              py::arg("synaptic_currents"),
              py::arg("last_spike_times"),
