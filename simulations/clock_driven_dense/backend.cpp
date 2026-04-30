@@ -17,7 +17,7 @@ class ClockDrivenDenseSimulation
 public:
     torch::Tensor bucket_indices_in_buffer;
     torch::Tensor bucketized_weights;
-
+    torch::Tensor random_noise;
     torch::Tensor membrane_voltages;
     torch::Tensor synaptic_currents;
     torch::Tensor last_spike_times;
@@ -45,6 +45,7 @@ public:
     ClockDrivenDenseSimulation(
         torch::Tensor bucket_indices_in_buffer,
         torch::Tensor bucketized_weights,
+        torch::Tensor random_noise,
         torch::Tensor membrane_voltages,
         torch::Tensor synaptic_currents,
         torch::Tensor last_spike_times,
@@ -68,6 +69,7 @@ public:
         float threshold_voltage)
         : bucket_indices_in_buffer(bucket_indices_in_buffer),
           bucketized_weights(bucketized_weights),
+          random_noise(random_noise),
           membrane_voltages(membrane_voltages),
           synaptic_currents(synaptic_currents),
           last_spike_times(last_spike_times),
@@ -100,7 +102,6 @@ public:
                { timed_out = 1; });
         alarm(max_runtime);
 
-        torch::Tensor random_noise = torch::empty_like(membrane_voltages);
         int buffer_index = 0;
 
         for (int t = 0; t < num_timesteps && !timed_out; t++)
@@ -157,6 +158,7 @@ PYBIND11_MODULE(backend, m)
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
+                 torch::Tensor,
                  int,
                  int,
                  int,
@@ -174,6 +176,7 @@ PYBIND11_MODULE(backend, m)
                  float>(),
              py::arg("bucket_indices_in_buffer"),
              py::arg("bucketized_weights"),
+             py::arg("random_noise"),
              py::arg("membrane_voltages"),
              py::arg("synaptic_currents"),
              py::arg("last_spike_times"),
