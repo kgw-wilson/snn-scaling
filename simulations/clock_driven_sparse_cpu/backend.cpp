@@ -105,29 +105,56 @@ public:
     {
         descr.type = SPARSE_MATRIX_TYPE_GENERAL;
 
-        for (auto &[data, indices, indptr] : bucketized_weights)
+        // for (auto &[data, indices, indptr] : bucketized_weights)
+        // {
+        //     auto d = data.unchecked<1>();
+        //     auto idx = indices.unchecked<1>();
+        //     auto ptr = indptr.unchecked<1>();
+
+        //     sparse_matrix_t mat;
+        //     mkl_sparse_s_create_csr(
+        //         &mat,
+        //         SPARSE_INDEX_BASE_ZERO,
+        //         num_neurons,
+        //         num_neurons,
+        //         const_cast<int *>(ptr.data(0)),
+        //         const_cast<int *>(ptr.data(0)) + 1,
+        //         const_cast<int *>(idx.data(0)),
+        //         const_cast<float *>(d.data(0)));
+
+        //     mkl_sparse_optimize(mat);
+        //     mkl_matrices.push_back(mat);
+        // }
+
+        for (torch::Tensor &mat_tensor : bucketized_weights)
         {
-            auto d = data.unchecked<1>();
-            auto idx = indices.unchecked<1>();
-            auto ptr = indptr.unchecked<1>();
+            // mat_tensor is expected to be a CSR tensor in PyTorch:
+            // (crow_indices, col_indices, values)
+
+            auto crow = mat_tensor.crow_indices().to(torch::kInt32).contiguous();
+            auto col = mat_tensor.col_indices().to(torch::kInt32).contiguous();
+            auto val = mat_tensor.values().to(torch::kFloat32).contiguous();
+
+            int *row_ptr = crow.data_ptr<int>();
+            int *col_idx = col.data_ptr<int>();
+            float *data_ptr = val.data_ptr<float>();
 
             sparse_matrix_t mat;
+
             mkl_sparse_s_create_csr(
                 &mat,
                 SPARSE_INDEX_BASE_ZERO,
                 num_neurons,
                 num_neurons,
-                const_cast<int *>(ptr.data(0)),
-                const_cast<int *>(ptr.data(0)) + 1,
-                const_cast<int *>(idx.data(0)),
-                const_cast<float *>(d.data(0)));
+                row_ptr,
+                col_idx,
+                data_ptr);
 
             mkl_sparse_optimize(mat);
             mkl_matrices.push_back(mat);
         }
 
         matmul_result = torch::zeros({num_neurons});
-        torch::Tensor all_results = torch::zeros({num_buckets, num_neurons});
     }
 
     ~ClockDrivenSparseCpuSimulation()
