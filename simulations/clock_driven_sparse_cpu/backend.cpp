@@ -147,6 +147,7 @@ public:
                 num_neurons,
                 num_neurons,
                 row_ptr,
+                row_ptr + 1,
                 col_idx,
                 data_ptr);
 
