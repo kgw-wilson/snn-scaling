@@ -29,8 +29,6 @@ def clock_driven_sparse_cpu(sim_config: SimulationConfig, seed: int):
     (
         _,
         _,
-        _,
-        _,
         bucket_indices_in_buffer,
     ) = create_lookup_tensors(sim_config)
 
@@ -62,11 +60,14 @@ def clock_driven_sparse_cpu(sim_config: SimulationConfig, seed: int):
         threshold_voltage=sim_config.threshold_voltage,
     )
 
-    with MonitoringWindow("Simulation main"):
+    with MonitoringWindow("Simulation main") as monitor:
         result = sim.run()
 
     if not result["timed_out"]:
         report_statistics(
+            sim_config,
+            "clock_driven_sparse_cpu",
+            monitor.elapsed_time,
             torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
             torch.tensor(result["spikes_per_bin"], dtype=torch.float32),
         )
