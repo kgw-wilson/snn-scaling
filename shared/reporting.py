@@ -2,29 +2,50 @@ import torch
 from shared.simulation_config import SimulationConfig
 
 
-def report_spike_statistics(
+import csv
+from pathlib import Path
+
+
+def report_statistics(
+    sim_config: SimulationConfig,
+    func_name: str,
+    elapsed_time: float,
     spikes_per_neuron: torch.Tensor,
     spikes_per_bin: torch.Tensor,
 ) -> None:
     """
-    Print spike statistics after a simulation run
+    Save statistics to CSV after a simulation run
 
     Args:
+        sim_config: SimulationConfig contains simulation parameters
+        func_name: name of the simulation function/backend
+        elapsed_time: float representing total runtime of the simulation in seconds
         spikes_per_neuron: int tensor of shape [num_neurons] with spike counts per neuron
         spikes_per_bin: int tensor of shape [num_bins] with spike counts per time bin
     """
-    # TODO: convert to float
+    results_path = Path("results.csv")
 
-    # print("== Spike Statistics ==")
-    print(f"{spikes_per_neuron.sum().item()=}")
-    # print(f"Mean spikes per neuron: {spikes_per_neuron.mean().item():.2f}")
-    # print(f"Std spikes per neuron: {spikes_per_neuron.std().item():.2f}")
-    # print(f"Mean spikes per bin: {spikes_per_bin.mean().item():.2f}")
-    # print(f"Std spikes per bin: {spikes_per_bin.std().item():.2f}")
-    # print(f"Max spikes by a neuron: {spikes_per_neuron.max().item()}")
-    # print(f"Min spikes by a neuron: {spikes_per_neuron.min().item()}")
-    # print(f"Max spikes in a bin: {spikes_per_bin.max().item()}")
-    # print(f"Min spikes in a bin: {spikes_per_bin.min().item()}")
+    row = {
+        "func_name": func_name,
+        "elapsed_time": elapsed_time,
+        "device": sim_config.device_str,
+        "num_neurons": sim_config.num_neurons,
+        "connection_prob": sim_config.connection_prob,
+        "timestep": sim_config.timestep,
+        "min_delay": sim_config.min_delay,
+        "max_delay": sim_config.max_delay,
+        "mean_spikes_per_neuron": spikes_per_neuron.float().mean().item(),
+        "mean_spikes_per_bin": spikes_per_bin.float().mean().item(),
+    }
+
+    write_header = not results_path.exists()
+
+    with open(results_path, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=row.keys())
+        if write_header:
+            writer.writeheader()
+        writer.writerow(row)
+
 
 
 def create_spike_reporting_tensors(

@@ -1,5 +1,3 @@
-from typing import Union
-from scipy.sparse import csr_matrix
 import torch
 from shared.simulation_config import SimulationConfig
 
@@ -45,9 +43,7 @@ def create_er_dense(sim_config: SimulationConfig) -> torch.Tensor:
     return weights
 
 
-def create_er_sparse(
-    sim_config: SimulationConfig, use_numpy: bool
-) -> Union[torch.Tensor, csr_matrix]:
+def create_er_sparse(sim_config: SimulationConfig) -> torch.Tensor:
     """
     Create a sparse weighted Erdos-Renyi connectivity matrix
 
@@ -56,19 +52,12 @@ def create_er_sparse(
     be unique, as .coalesce() sums duplicate edges which breaks the
     expectation of constant weight values.
 
-    Callers of this function should set use_numpy to False if running
-    a simulation with a CUDA backend. Callers should set use_numpy to
-    True if running on CPU. This is because PyTorch's sparse support
-    on CPU is inefficient (as of 03/2026).
-
     The weight tensor is created as coo first because of its
     more human-friendly format and then converted to csr for
     faster computation.
 
     Returns:
-        torch.Tensor - sparse csr tensor of shape (N, N) if use_numpy is False
-
-        csr_matrix - sparse csr matrix of shape (N, N) if use_numpy is True
+        torch.Tensor - sparse csr tensor of shape (N, N)
     """
 
     N = sim_config.num_neurons
@@ -97,11 +86,5 @@ def create_er_sparse(
         dtype=torch.float32,
     )
     weights_csr = weights_coo.coalesce().to_sparse_csr()
-
-    if use_numpy:
-        row_ind = weights_csr.crow_indices().numpy()
-        col_ind = weights_csr.col_indices().numpy()
-        data = weights_csr.values().numpy()
-        return csr_matrix((data, col_ind, row_ind), shape=(N, N))
 
     return weights_csr

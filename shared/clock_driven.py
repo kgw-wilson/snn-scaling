@@ -2,6 +2,7 @@ from scipy.sparse import csr_matrix
 import torch
 from shared.graph_creation import create_er_dense
 from shared.simulation_config import SimulationConfig
+from shared.utils import create_delays
 
 
 def build_dense_weights_bucketized_by_delay(
@@ -39,65 +40,38 @@ def build_dense_weights_bucketized_by_delay(
 
 
 def build_sparse_weights_bucketized_by_delay(
-    sim_config: SimulationConfig, use_numpy: bool
-) -> tuple[list[torch.Tensor] | list[csr_matrix], int]:
+    sim_config: SimulationConfig,
+) -> tuple[list[torch.Tensor], int]:
     """
-    Build a list of sparse weight tensors/np.ndarrays organized into discrete delay buckets
-
-    Relies on a dense weight graph for simplicity, but is very memory inefficient because of
-    its creation of the dense weight graph and multiple sparse matrices.
-
-    TODO: update to make more memory efficient.
+    Build a list of sparse weight tensors organized into discrete delay buckets.
 
     Returns:
-        bucketized_weights: list of either scipy.sparse.csr_matrix or torch.sparse_csr_tensor
-            depending on use_numpy value. CSR matrix of shape [num_neurons, num_neurons]
+        bucketized_weights: list of torch.sparse_csr_tensor of shape [num_neurons, num_neurons]
+        num_buckets: number of delay buckets
     """
-
     num_neurons = sim_config.num_neurons
     device = sim_config.device
 
-    if use_numpy and device != torch.device("cpu"):
-        raise ValueError("This function should only use numpy when running on CPU.")
-
     weights = create_er_dense(sim_config)
-
     delay_bucket_indices, num_buckets = _compute_delay_buckets(sim_config)
 
     row_idx, col_idx = torch.nonzero(weights, as_tuple=True)
     values = weights[row_idx, col_idx]
     edge_buckets = delay_bucket_indices[row_idx, col_idx]
 
-    if use_numpy:
-        row_idx = row_idx.numpy()
-        col_idx = col_idx.numpy()
-        values = values.numpy()
-        edge_buckets = edge_buckets.numpy()
-
     bucketized_weights = []
-
+    
     for bucket_idx in range(num_buckets):
-
         mask = edge_buckets == bucket_idx
-
-        rows = row_idx[mask]
-        cols = col_idx[mask]
-        vals = values[mask]
-
-        if use_numpy:
-            bucketized_weights.append(
-                csr_matrix((vals, (rows, cols)), shape=(num_neurons, num_neurons))
-            )
-        else:
-            indices = torch.stack([rows, cols])
-            weights_coo = torch.sparse_coo_tensor(
-                indices,
-                vals,
-                size=(num_neurons, num_neurons),
-                device=device,
-                dtype=torch.float32,
-            )
-            bucketized_weights.append(weights_coo.coalesce().to_sparse_csr())
+        indices = torch.stack([row_idx[mask], col_idx[mask]])
+        weights_coo = torch.sparse_coo_tensor(
+            indices,
+            values[mask],
+            size=(num_neurons, num_neurons),
+            device=device,
+            dtype=torch.float32,
+        )
+        bucketized_weights.append(weights_coo.coalesce().to_sparse_csr())
 
     return bucketized_weights, num_buckets
 
@@ -202,7 +176,7 @@ def _compute_delay_buckets(sim_config: SimulationConfig) -> tuple[torch.Tensor, 
     """
     Compute delay bucket indices and metadata shared across dense and sparse builds
 
-    Delays are sampled from uniform distribution. 
+    Delays are sampled from uniform distribution.
 
     Subtract 1 because torch.bucketize returns indices in the range
     [0, len(boundaries)], where index 0 corresponds to values strictly less
@@ -225,7 +199,6 @@ def _compute_delay_buckets(sim_config: SimulationConfig) -> tuple[torch.Tensor, 
         num_buckets: Total number of delay buckets
     """
 
-    num_neurons = sim_config.num_neurons
     device = sim_config.device
     timestep = sim_config.timestep
     min_delay = sim_config.min_delay
@@ -241,8 +214,7 @@ def _compute_delay_buckets(sim_config: SimulationConfig) -> tuple[torch.Tensor, 
         device=device,
     )
 
-    delays = torch.empty(num_neurons, num_neurons, device=device, dtype=torch.float32)
-    delays.uniform_(min_delay, max_delay)
+    delays = create_delays(sim_config)
 
     delay_bucket_indices = torch.bucketize(delays, timestep_boundaries, right=True) - 1
 

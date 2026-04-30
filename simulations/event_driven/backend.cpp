@@ -1,6 +1,8 @@
 #include <pybind11/pybind11.h>
-#include <pybind11/numpy.h>
 #include <pybind11/stl.h>
+#include <torch/extension.h>
+#include <signal.h>
+#include <unistd.h>
 #include <queue>
 #include <iostream>
 #include <vector>
@@ -9,6 +11,8 @@
 #include <stdexcept>
 
 namespace py = pybind11;
+
+volatile sig_atomic_t timed_out = 0;
 
 struct Event
 {
@@ -25,25 +29,26 @@ struct Event
 
 using EventQueue = std::priority_queue<Event, std::vector<Event>, std::greater<Event>>;
 
-class Simulation
+class EventDrivenSimulation
 {
 public:
-    py::array_t<int> indptr;
-    py::array_t<int> indices;
-    py::array_t<float> weights;
-    py::array_t<float> delays;
+    torch::Tensor crow_indices;
+    torch::Tensor col_indices;
+    torch::Tensor weights;
+    torch::Tensor delays;
 
-    py::array_t<float> membrane_voltages;
-    py::array_t<float> synaptic_currents;
-    py::array_t<float> last_update_times;
-    py::array_t<float> last_voltage_update_times;
-    py::array_t<float> last_spike_times;
+    torch::Tensor membrane_voltages;
+    torch::Tensor synaptic_currents;
+    torch::Tensor last_update_times;
+    torch::Tensor last_voltage_update_times;
+    torch::Tensor last_spike_times;
 
-    py::array_t<int> spikes_per_neuron;
-    py::array_t<int> spikes_per_bin;
+    torch::Tensor spikes_per_neuron;
+    torch::Tensor spikes_per_bin;
 
     EventQueue event_queue;
 
+    int max_runtime;
     int num_neurons;
     int num_bins;
     float resistance;
@@ -60,18 +65,19 @@ public:
     std::mt19937 rng;
     std::exponential_distribution<float> exp_dist;
 
-    Simulation(
-        py::array_t<int> indptr_arr,
-        py::array_t<int> indices_arr,
-        py::array_t<float> weights_arr,
-        py::array_t<float> delays_arr,
-        py::array_t<float> membrane_voltages_arr,
-        py::array_t<float> synaptic_currents_arr,
-        py::array_t<float> last_update_times_arr,
-        py::array_t<float> last_voltage_update_times_arr,
-        py::array_t<float> last_spike_times_arr,
-        py::array_t<int> spikes_per_neuron_arr,
-        py::array_t<int> spikes_per_bin_arr,
+    EventDrivenSimulation(
+        torch::Tensor crow_indices,
+        torch::Tensor col_indices,
+        torch::Tensor weights,
+        torch::Tensor delays,
+        torch::Tensor membrane_voltages,
+        torch::Tensor synaptic_currents,
+        torch::Tensor last_update_times,
+        torch::Tensor last_voltage_update_times,
+        torch::Tensor last_spike_times,
+        torch::Tensor spikes_per_neuron,
+        torch::Tensor spikes_per_bin,
+        int max_runtime,
         int num_neurons,
         int num_bins,
         float resistance,
@@ -84,53 +90,59 @@ public:
         float resting_voltage,
         float threshold_voltage,
         float bin_rate,
-        unsigned int seed) : indptr(indptr_arr),
-                             indices(indices_arr),
-                             weights(weights_arr),
-                             delays(delays_arr),
-                             membrane_voltages(membrane_voltages_arr),
-                             synaptic_currents(synaptic_currents_arr),
-                             last_update_times(last_update_times_arr),
-                             last_voltage_update_times(last_voltage_update_times_arr),
-                             last_spike_times(last_spike_times_arr),
-                             spikes_per_neuron(spikes_per_neuron_arr),
-                             spikes_per_bin(spikes_per_bin_arr),
-                             num_neurons(num_neurons),
-                             num_bins(num_bins),
-                             resistance(resistance),
-                             simulation_time(simulation_time),
-                             poisson_rate(poisson_rate),
-                             poisson_weight(poisson_weight),
-                             refractory_period(refractory_period),
-                             membrane_time_constant(membrane_time_constant),
-                             synaptic_time_constant(synaptic_time_constant),
-                             resting_voltage(resting_voltage),
-                             threshold_voltage(threshold_voltage),
-                             bin_rate(bin_rate),
-                             rng(seed),
-                             exp_dist(poisson_rate)
+        unsigned int seed)
+        : crow_indices(crow_indices),
+          col_indices(col_indices),
+          weights(weights),
+          delays(delays),
+          membrane_voltages(membrane_voltages),
+          synaptic_currents(synaptic_currents),
+          last_update_times(last_update_times),
+          last_voltage_update_times(last_voltage_update_times),
+          last_spike_times(last_spike_times),
+          spikes_per_neuron(spikes_per_neuron),
+          spikes_per_bin(spikes_per_bin),
+          max_runtime(max_runtime),
+          num_neurons(num_neurons),
+          num_bins(num_bins),
+          resistance(resistance),
+          simulation_time(simulation_time),
+          poisson_rate(poisson_rate),
+          poisson_weight(poisson_weight),
+          refractory_period(refractory_period),
+          membrane_time_constant(membrane_time_constant),
+          synaptic_time_constant(synaptic_time_constant),
+          resting_voltage(resting_voltage),
+          threshold_voltage(threshold_voltage),
+          bin_rate(bin_rate),
+          rng(seed),
+          exp_dist(poisson_rate)
     {
         for (int i = 0; i < num_neurons; i++)
-        {
             event_queue.push({exp_dist(rng), i, poisson_weight, true});
-        }
     }
 
     py::dict run()
     {
-        auto ind = indptr.unchecked<1>();
-        auto idx = indices.unchecked<1>();
-        auto w = weights.unchecked<1>();
-        auto d = delays.unchecked<1>();
-        auto mv = membrane_voltages.mutable_unchecked<1>();
-        auto sc = synaptic_currents.mutable_unchecked<1>();
-        auto lut = last_update_times.mutable_unchecked<1>();
-        auto lvut = last_voltage_update_times.mutable_unchecked<1>();
-        auto lst = last_spike_times.mutable_unchecked<1>();
-        auto spn = spikes_per_neuron.mutable_unchecked<1>();
-        auto spb = spikes_per_bin.mutable_unchecked<1>();
 
-        while (!event_queue.empty())
+        auto crow = crow_indices.accessor<int, 1>();
+        auto col = col_indices.accessor<int, 1>();
+        auto w = weights.accessor<float, 1>();
+        auto d = delays.accessor<float, 1>();
+        auto mv = membrane_voltages.accessor<float, 1>();
+        auto sc = synaptic_currents.accessor<float, 1>();
+        auto lut = last_update_times.accessor<float, 1>();
+        auto lvut = last_voltage_update_times.accessor<float, 1>();
+        auto lst = last_spike_times.accessor<float, 1>();
+        auto spn = spikes_per_neuron.accessor<int, 1>();
+        auto spb = spikes_per_bin.accessor<int, 1>();
+
+        timed_out = 0;
+        signal(SIGALRM, [](int)
+               { timed_out = 1; });
+        alarm(max_runtime);
+
+        while (!event_queue.empty() && !timed_out)
         {
             Event e = event_queue.top();
             event_queue.pop();
@@ -141,9 +153,7 @@ public:
                 break;
 
             if (e.is_poisson)
-            {
                 event_queue.push({current_time + exp_dist(rng), i, poisson_weight, true});
-            }
 
             bool outside_refractory = (current_time - lst[i]) >= refractory_period;
 
@@ -166,12 +176,11 @@ public:
 
                 if (new_voltage >= threshold_voltage)
                 {
-                    int start = ind[i];
-                    int end = ind[i + 1];
+                    int start = crow[i];
+                    int end = crow[i + 1];
                     for (int j = start; j < end; j++)
-                    {
-                        event_queue.push({current_time + d[j], idx[j], w[j], false});
-                    }
+                        event_queue.push({current_time + d[j], col[j], w[j], false});
+
                     mv[i] = resting_voltage;
                     lst[i] = current_time;
                     lvut[i] = current_time + refractory_period;
@@ -181,27 +190,31 @@ public:
             }
         }
 
+        alarm(0);
+
         return py::dict(
             py::arg("spikes_per_neuron") = spikes_per_neuron,
-            py::arg("spikes_per_bin") = spikes_per_bin);
+            py::arg("spikes_per_bin") = spikes_per_bin,
+            py::arg("timed_out") = (bool)timed_out);
     }
 };
 
-PYBIND11_MODULE(event_driven_cpu_backend, m)
+PYBIND11_MODULE(backend, m)
 {
-    py::class_<Simulation>(m, "Simulation")
+    py::class_<EventDrivenSimulation>(m, "EventDrivenSimulation")
         .def(py::init<
-                 py::array_t<int>,
-                 py::array_t<int>,
-                 py::array_t<float>,
-                 py::array_t<float>,
-                 py::array_t<float>,
-                 py::array_t<float>,
-                 py::array_t<float>,
-                 py::array_t<float>,
-                 py::array_t<float>,
-                 py::array_t<int>,
-                 py::array_t<int>,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 int,
                  int,
                  int,
                  float,
@@ -215,8 +228,8 @@ PYBIND11_MODULE(event_driven_cpu_backend, m)
                  float,
                  float,
                  unsigned int>(),
-             py::arg("indptr"),
-             py::arg("indices"),
+             py::arg("crow_indices"),
+             py::arg("col_indices"),
              py::arg("weights"),
              py::arg("delays"),
              py::arg("membrane_voltages"),
@@ -226,6 +239,7 @@ PYBIND11_MODULE(event_driven_cpu_backend, m)
              py::arg("last_spike_times"),
              py::arg("spikes_per_neuron"),
              py::arg("spikes_per_bin"),
+             py::arg("max_runtime"),
              py::arg("num_neurons"),
              py::arg("num_bins"),
              py::arg("resistance"),
@@ -239,5 +253,5 @@ PYBIND11_MODULE(event_driven_cpu_backend, m)
              py::arg("threshold_voltage"),
              py::arg("bin_rate"),
              py::arg("seed"))
-        .def("run", &Simulation::run);
+        .def("run", &EventDrivenSimulation::run);
 }

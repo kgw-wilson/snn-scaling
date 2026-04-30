@@ -6,13 +6,13 @@ from shared.clock_driven import (
     create_lookup_tensors,
 )
 from shared.monitoring import MonitoringWindow
-from shared.reporting import report_spike_statistics, create_spike_reporting_tensors
+from shared.reporting import report_statistics, create_spike_reporting_tensors
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
 
 
-def clock_driven_dense_cpu_compiled(sim_config: SimulationConfig, seed: int) -> None:
-    """Run clock-driven SNN simulation on CPU using dense graph for weights"""
+def clock_driven_dense_gpu_compiled(sim_config: SimulationConfig, seed: int) -> None:
+    """Run clock-driven SNN simulation on GPU using dense graph for weights"""
 
     torch.manual_seed(seed)
 
@@ -44,17 +44,17 @@ def clock_driven_dense_cpu_compiled(sim_config: SimulationConfig, seed: int) -> 
         bucket_indices_in_buffer,
     ) = create_lookup_tensors(sim_config)
 
-
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(sim_config)
 
     one_minus_decay = 1.0 - membrane_decay
 
     buffer_slice = torch.zeros_like(ring_buffer[0])
 
+
     simulate_fn = torch.compile(
         _simulate,
         backend="inductor",
-        mode="reduce-overhead",
+        mode="max-autotune",
         fullgraph=False,
         dynamic=False,
     )
@@ -87,7 +87,7 @@ def clock_driven_dense_cpu_compiled(sim_config: SimulationConfig, seed: int) -> 
             timesteps_per_bin,
         )
 
-    report_spike_statistics(spikes_per_neuron, spikes_per_bin)
+    report_statistics(spikes_per_neuron, spikes_per_bin)
 
 
 def _simulate(
@@ -117,7 +117,6 @@ def _simulate(
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
 
     buffer_index = 0
-    
 
     for t in range(num_timesteps):
 
@@ -154,6 +153,7 @@ def _simulate(
 
         buffer_slice.copy_(ring_buffer[buffer_index])
 
+        # Causes new graphs to be created. But .zero_() breaks CUDA graphs.
         ring_buffer.index_add_(
             0,
             buffer_index,

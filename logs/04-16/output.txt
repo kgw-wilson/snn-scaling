@@ -1,0 +1,312 @@
+clock_driven_dense_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.273090124130249 seconds.
+spikes_per_neuron.sum().item()=236
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.24271869659423828 seconds.
+spikes_per_neuron.sum().item()=244
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.2497544288635254 seconds.
+spikes_per_neuron.sum().item()=239
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.224700927734375 seconds.
+spikes_per_neuron.sum().item()=251
+===================
+clock_driven_dense_cpu, num_neurons=10, connection_prob=1
+Simulation main took 0.22656893730163574 seconds.
+spikes_per_neuron.sum().item()=227
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.39479684829711914 seconds.
+spikes_per_neuron.sum().item()=4177
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.37371063232421875 seconds.
+spikes_per_neuron.sum().item()=4136
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.37899351119995117 seconds.
+spikes_per_neuron.sum().item()=4138
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.36023831367492676 seconds.
+spikes_per_neuron.sum().item()=4134
+===================
+clock_driven_dense_cpu, num_neurons=100, connection_prob=1
+Simulation main took 0.3650648593902588 seconds.
+spikes_per_neuron.sum().item()=4196
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 1.1546273231506348 seconds.
+spikes_per_neuron.sum().item()=47000
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.9648332595825195 seconds.
+spikes_per_neuron.sum().item()=47006
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.9552314281463623 seconds.
+spikes_per_neuron.sum().item()=47003
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.9460861682891846 seconds.
+spikes_per_neuron.sum().item()=47002
+===================
+clock_driven_dense_cpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.9530866146087646 seconds.
+spikes_per_neuron.sum().item()=47001
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=1
+Simulation main took 97.72805380821228 seconds.
+spikes_per_neuron.sum().item()=480021
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=1
+Simulation main took 97.26985383033752 seconds.
+spikes_per_neuron.sum().item()=480020
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=1
+Simulation main took 97.71188712120056 seconds.
+spikes_per_neuron.sum().item()=480019
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=1
+Simulation main took 97.5822217464447 seconds.
+spikes_per_neuron.sum().item()=480021
+===================
+clock_driven_dense_cpu, num_neurons=10000, connection_prob=1
+Simulation main took 97.59552001953125 seconds.
+spikes_per_neuron.sum().item()=480027
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 1419.437340259552 seconds.
+spikes_per_neuron.sum().item()=234
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.007552385330200195 seconds.
+spikes_per_neuron.sum().item()=239
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.006403446197509766 seconds.
+spikes_per_neuron.sum().item()=237
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.006738424301147461 seconds.
+spikes_per_neuron.sum().item()=234
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.006768703460693359 seconds.
+spikes_per_neuron.sum().item()=238
+===================
+clock_driven_dense_cpu_compiled, num_neurons=100, connection_prob=1
+Simulation main took 1594.419521331787 seconds.
+spikes_per_neuron.sum().item()=4125
+===================
+clock_driven_dense_cpu_compiled, num_neurons=100, connection_prob=1
+Simulation main took 0.034169673919677734 seconds.
+spikes_per_neuron.sum().item()=4129
+===================
+clock_driven_dense_cpu_compiled, num_neurons=100, connection_prob=1
+Simulation main took 0.03931570053100586 seconds.
+spikes_per_neuron.sum().item()=4137
+===================
+clock_driven_dense_cpu_compiled, num_neurons=100, connection_prob=1
+Simulation main took 0.03525376319885254 seconds.
+spikes_per_neuron.sum().item()=4141
+===================
+clock_driven_dense_cpu_compiled, num_neurons=100, connection_prob=1
+Simulation main took 0.03663301467895508 seconds.
+spikes_per_neuron.sum().item()=4181
+===================
+clock_driven_dense_cpu_compiled, num_neurons=1000, connection_prob=1
+Simulation main took 1536.873036623001 seconds.
+spikes_per_neuron.sum().item()=47006
+===================
+clock_driven_dense_cpu_compiled, num_neurons=1000, connection_prob=1
+Simulation main took 1.327272891998291 seconds.
+spikes_per_neuron.sum().item()=47005
+===================
+clock_driven_dense_cpu_compiled, num_neurons=1000, connection_prob=1
+Simulation main took 1.4950988292694092 seconds.
+spikes_per_neuron.sum().item()=47004
+===================
+clock_driven_dense_cpu_compiled, num_neurons=1000, connection_prob=1
+Simulation main took 1.3794376850128174 seconds.
+spikes_per_neuron.sum().item()=46660
+===================
+clock_driven_dense_cpu_compiled, num_neurons=1000, connection_prob=1
+Simulation main took 1.3464300632476807 seconds.
+spikes_per_neuron.sum().item()=47005
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10000, connection_prob=1
+Simulation main took 1688.9866201877594 seconds.
+spikes_per_neuron.sum().item()=480002
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10000, connection_prob=1
+Simulation main took 195.18715381622314 seconds.
+spikes_per_neuron.sum().item()=480009
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10000, connection_prob=1
+Simulation main took 196.78745245933533 seconds.
+spikes_per_neuron.sum().item()=480008
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10000, connection_prob=1
+Simulation main took 196.73789262771606 seconds.
+spikes_per_neuron.sum().item()=480003
+===================
+clock_driven_dense_cpu_compiled, num_neurons=10000, connection_prob=1
+Simulation main took 198.00031185150146 seconds.
+spikes_per_neuron.sum().item()=480002
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=1
+Simulation main took 0.8116354942321777 seconds.
+spikes_per_neuron.sum().item()=234
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=1
+Simulation main took 0.5358579158782959 seconds.
+spikes_per_neuron.sum().item()=256
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=1
+Simulation main took 0.5239579677581787 seconds.
+spikes_per_neuron.sum().item()=248
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=1
+Simulation main took 0.7228841781616211 seconds.
+spikes_per_neuron.sum().item()=242
+===================
+clock_driven_dense_gpu, num_neurons=10, connection_prob=1
+Simulation main took 0.6787295341491699 seconds.
+spikes_per_neuron.sum().item()=243
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=1
+Simulation main took 0.819770336151123 seconds.
+spikes_per_neuron.sum().item()=4134
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=1
+Simulation main took 0.5761728286743164 seconds.
+spikes_per_neuron.sum().item()=4137
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=1
+Simulation main took 0.5340535640716553 seconds.
+spikes_per_neuron.sum().item()=4147
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=1
+Simulation main took 0.5770683288574219 seconds.
+spikes_per_neuron.sum().item()=4190
+===================
+clock_driven_dense_gpu, num_neurons=100, connection_prob=1
+Simulation main took 0.53829026222229 seconds.
+spikes_per_neuron.sum().item()=4128
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.6190555095672607 seconds.
+spikes_per_neuron.sum().item()=47005
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.6134054660797119 seconds.
+spikes_per_neuron.sum().item()=47001
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.5900638103485107 seconds.
+spikes_per_neuron.sum().item()=47002
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.5948529243469238 seconds.
+spikes_per_neuron.sum().item()=47002
+===================
+clock_driven_dense_gpu, num_neurons=1000, connection_prob=1
+Simulation main took 0.5899608135223389 seconds.
+spikes_per_neuron.sum().item()=47001
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=1
+Simulation main took 5.14211630821228 seconds.
+spikes_per_neuron.sum().item()=480022
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=1
+Simulation main took 5.097503900527954 seconds.
+spikes_per_neuron.sum().item()=480029
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=1
+Simulation main took 5.129181385040283 seconds.
+spikes_per_neuron.sum().item()=480021
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=1
+Simulation main took 5.1836113929748535 seconds.
+spikes_per_neuron.sum().item()=480020
+===================
+clock_driven_dense_gpu, num_neurons=10000, connection_prob=1
+Simulation main took 5.2035839557647705 seconds.
+spikes_per_neuron.sum().item()=480025
+The default PyNN timestep of 0.1 is less than 1(ms) that SpyNNaker is designed for. Consider including a timestep in your setup call.
+Unable to find config file in your home directory
+**********************************************************
+/root/.spynnaker.cfg has been created. 
+Please edit this file and change "machineName" to the IP address of your SpiNNaker board or change spalloc_server to the server urls and change "version" to the version of SpiNNaker hardware you are running on:
+***********************************************************
+
+===================
+clock_driven_dense_gpu_compiled, num_neurons=10, connection_prob=1
+skipping cudagraphs due to mutated inputs (3 instances). Found from : 
+   File "/content/snn-scaling/simulations/clock_driven_dense_gpu/compiled.py", line 149, in _simulate
+    ring_buffer[buffer_index].zero_()
+
+Simulation main took 3516.310000896454 seconds.
+spikes_per_neuron.sum().item()=237
+===================
+clock_driven_dense_gpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.05287599563598633 seconds.
+spikes_per_neuron.sum().item()=242
+===================
+clock_driven_dense_gpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.048280954360961914 seconds.
+spikes_per_neuron.sum().item()=234
+===================
+clock_driven_dense_gpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.050401926040649414 seconds.
+spikes_per_neuron.sum().item()=242
+===================
+clock_driven_dense_gpu_compiled, num_neurons=10, connection_prob=1
+Simulation main took 0.04462242126464844 seconds.
+spikes_per_neuron.sum().item()=237
+===================
+clock_driven_dense_gpu_compiled, num_neurons=100, connection_prob=1
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1] Failed to reorder for topological_sort_dfs
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1] Traceback (most recent call last):
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 974, in reorder_for_peak_memory
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]     order = method(nodes)
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]             ^^^^^^^^^^^^^
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 792, in topological_sort_dfs
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]     visit(node)
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 780, in visit
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]     visit(node)
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 780, in visit
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]     visit(node)
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 780, in visit
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]     visit(node)
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]   [Previous line repeated 1941 more times]
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]   File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 770, in visit
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]     if n not in seen:
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1]        ^^^^^^^^^^^^^
+E0429 02:17:06.047000 11889 torch/_inductor/memory.py:984] [0/1] RecursionError: maximum recursion depth exceeded
+Simulation main took 1111.43976187706 seconds.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 780, in visit
+    visit(node)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 780, in visit
+    visit(node)
+  File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 780, in visit
+    visit(node)
+  [Previous line repeated 996 more times]
+  File "/usr/local/lib/python3.12/dist-packages/torch/_inductor/memory.py", line 770, in visit
+    if n not in seen:
+       ^^^^^^^^^^^^^
+torch._inductor.exc.InductorError: RecursionError: maximum recursion depth exceeded
+
+Set TORCHDYNAMO_VERBOSE=1 for the internal stack trace (please do this especially if you're reporting a bug to PyTorch). For even more developer context, set TORCH_LOGS="+dynamo"
+
+
+!WARNING: 1 log messages were generated at level WARNING or above.
+This may mean that the results are invalid.
+These are:
+The default PyNN timestep of 0.1 is less than 1(ms) that SpyNNaker is designed for. Consider including a timestep in your setup call.
+

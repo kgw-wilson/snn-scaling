@@ -34,6 +34,20 @@ def create_state_variables(
     return membrane_voltages, synaptic_currents, last_spike_times
 
 
+def create_delays(sim_config: SimulationConfig) -> torch.Tensor:
+    """Return tensor with uniform delay values for each neuron pair"""
+
+    num_neurons = sim_config.num_neurons
+    device = sim_config.device
+    min_delay = sim_config.min_delay
+    max_delay = sim_config.max_delay
+
+    delays = torch.empty(num_neurons, num_neurons, device=device, dtype=torch.float32)
+    delays.uniform_(min_delay, max_delay)
+
+    return delays
+
+
 def get_available_devices() -> list[str]:
     """Returns list of all available device names
 

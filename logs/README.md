@@ -10,3 +10,4 @@ Unstructured output containing logs and analysis for simulation runs. Future res
     _NUM_NEURONS = [10, 100, 1000, 10000]
     _NUM_REPEATS = 1
 
+- `04-16`: Explores eager execution vs pytorch.compile for dense cpu simulation. pytorch.compile was dropped for subsequent experiments. See README in folder for more info.

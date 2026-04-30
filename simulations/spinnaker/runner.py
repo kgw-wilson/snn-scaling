@@ -3,12 +3,13 @@ import pyNN.spiNNaker as p
 from spynnaker.pyNN.models.neuron.builds import IFCurrExpBase
 from shared.monitoring import MonitoringWindow
 from shared.simulation_config import SimulationConfig
-from shared.reporting import create_spike_reporting_tensors, report_spike_statistics
+from shared.reporting import create_spike_reporting_tensors, report_statistics
 
 
-def neuromorphic(sim_config: SimulationConfig, seed: int):
+def spinnaker(sim_config: SimulationConfig, seed: int):
     """Run SNN using SpyNNaker to access neuromorphic hardware"""
 
+    # TODO: check time units
     p.setup(timestep=sim_config.timestep * 1000, time_scale_factor=1000)
     p.set_number_of_neurons_per_core(p.IF_curr_exp, 64)
     p.set_number_of_neurons_per_core(p.SpikeSourcePoisson, 64)
@@ -42,7 +43,7 @@ def neuromorphic(sim_config: SimulationConfig, seed: int):
     p.Projection(
         pop_exc,
         pop_exc,
-        p.FixedProbabilityConnector(0.1),
+        p.FixedProbabilityConnector(sim_config.connection_prob),
         p.StaticSynapse(
             weight=sim_config.recurrent_weight,
             delay=RandomDistribution(
@@ -66,7 +67,7 @@ def neuromorphic(sim_config: SimulationConfig, seed: int):
     pop_exc.record("spikes")
 
     with MonitoringWindow("simulation main"):
-        p.run(sim_config.simulation_time * 1000)
+        p.run(sim_config.simulation_time * 1000) # TODO: set max runtime
 
     data = pop_exc.get_data("spikes")
 
@@ -78,6 +79,6 @@ def neuromorphic(sim_config: SimulationConfig, seed: int):
             bin_idx = int(spike_time / sim_config.bin_rate)  # TODO: what time units?
             spikes_per_bin[bin_idx] += 1
 
-    report_spike_statistics(spikes_per_neuron, spikes_per_bin)
+    report_statistics(spikes_per_neuron, spikes_per_bin)
 
     p.end()

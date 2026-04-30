@@ -1,4 +1,5 @@
 import time
+import torch
 
 
 class MonitoringWindow:
@@ -11,10 +12,19 @@ class MonitoringWindow:
     def __init__(self, name: str):
         self.name = name
         self.start_time = None
+        self.elapsed_time = None
 
     def __enter__(self):
+        try:
+            torch.cuda.synchronize()
+        except:
+            pass
         self.start_time = time.time()
+        return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        elapsed_time = time.time() - self.start_time
-        print(f"{self.name} took {elapsed_time} seconds.")
+        try:
+            torch.cuda.synchronize()
+        except:
+            pass
+        self.elapsed_time = time.time() - self.start_time

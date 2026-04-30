@@ -18,7 +18,8 @@ class SimulationConfig:
     appoximation to a Poisson process is used, so poisson_prob
     should be << 1 for accuracy.
     """
-
+    
+    max_runtime: int
     num_neurons: int
     connection_prob: float
     device_str: str
@@ -88,6 +89,11 @@ class SimulationConfig:
 
     def __post_init__(self):
         """Validate values after instantiation."""
+
+        if not isinstance(self.max_runtime, int):
+            raise ValueError(
+                f"max_runtime must be a positive int, got {self.max_runtime}"
+            )
 
         if not isinstance(self.num_neurons, int) or self.num_neurons <= 0:
             raise ValueError(

@@ -2,29 +2,27 @@ import math
 
 from shared.simulation_config import SimulationConfig
 from shared.utils import get_available_devices
-from simulations.clock_driven_dense_cpu.eager import clock_driven_dense_cpu as eager_cpu
-from simulations.clock_driven_dense_cpu.compiled import clock_driven_dense_cpu_compiled as compiled_cpu
-from simulations.clock_driven_dense_gpu.eager import clock_driven_dense_gpu as eager_gpu
-from simulations.clock_driven_dense_gpu.compiled import clock_driven_dense_gpu_compiled as compiled_gpu
+from simulations.clock_driven_dense.runner import clock_driven_dense
 # from simulations.clock_driven_sparse_cpu.runner import clock_driven_sparse_cpu
-# from simulations.clock_driven_sparse_gpu.runner import clock_driven_sparse_gpu
-# from simulations.event_driven.runner import event_driven_cpu
-# from simulations.neuromorphic.runner import neuromorphic
+from simulations.clock_driven_sparse_gpu.runner import clock_driven_sparse_gpu
+from simulations.event_driven.runner import event_driven_cpu
 
-_CONNECTION_PROBS = [1] # [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
-_NUM_NEURONS = [10,100,1000,10000] #[10, 100, 1000, 10000]
+_CONNECTION_PROBS = [1]  # [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
+_NUM_NEURONS = [10, 100]  # [10, 100, 1000, 10000]
 _NUM_REPEATS = 5
 _BASE_SEED = 42
 
 _DEVICE_TO_SIMULATIONS = {
     "cpu": [
-        eager_cpu,
-        compiled_cpu,
+        clock_driven_dense,
         # clock_driven_sparse_cpu,
-        # event_driven_cpu,
+        event_driven_cpu,
     ],
-    "gpu": [eager_gpu, compiled_gpu],
-    "neuromorphic": [] # [neuromorphic],
+    "gpu": [
+        clock_driven_dense,
+        clock_driven_sparse_gpu,
+    ],
+    "neuromorphic": [],
 }
 
 
@@ -44,7 +42,7 @@ if __name__ == "__main__":
 
                         print("===================")
                         print(
-                            f"{simulation.__name__}, {num_neurons=}, {connection_prob=}"
+                            f"{simulation.__name__}, {device=}, {num_neurons=}, {connection_prob=}"
                         )
 
                         # Ensure same configuration always produces same seed
@@ -73,6 +71,7 @@ if __name__ == "__main__":
                         # of timestep so neurons will not fire again in the same timestep which is crucial for correctness
                         # in the event-driven simulation.
                         sim_config = SimulationConfig(
+                            max_runtime=5*60,
                             num_neurons=num_neurons,
                             connection_prob=connection_prob,
                             device_str=device,
