@@ -18,7 +18,6 @@ public:
     torch::Tensor bucket_indices_in_buffer;
     std::vector<torch::Tensor> bucketized_weights;
     torch::Tensor random_noise;
-    torch::Tensor index_tensor;
     torch::Tensor membrane_voltages;
     torch::Tensor synaptic_currents;
     torch::Tensor last_spike_times;
@@ -48,7 +47,6 @@ public:
         torch::Tensor bucket_indices_in_buffer,
         std::vector<torch::Tensor> bucketized_weights,
         torch::Tensor random_noise,
-        torch::Tensor index_tensor,
         torch::Tensor membrane_voltages,
         torch::Tensor synaptic_currents,
         torch::Tensor last_spike_times,
@@ -74,7 +72,6 @@ public:
         : bucket_indices_in_buffer(bucket_indices_in_buffer),
           bucketized_weights(bucketized_weights),
           random_noise(random_noise),
-          index_tensor(index_tensor),
           membrane_voltages(membrane_voltages),
           synaptic_currents(synaptic_currents),
           last_spike_times(last_spike_times),
@@ -132,10 +129,7 @@ public:
 
             for (int bucket_idx = 0; bucket_idx < num_buckets; bucket_idx++)
             {
-                index_tensor[0] = bucket_indices_in_buffer[t][bucket_idx];
-                ring_buffer.index_add_(
-                    0,
-                    index_tensor,
+                ring_buffer[bucket_indices_in_buffer[t][bucket_idx]].add_(
                     torch::mv(bucketized_weights[bucket_idx], spikes_bool.to(torch::kFloat32)));
             }
 
@@ -169,7 +163,6 @@ PYBIND11_MODULE(backend, m)
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
-                 torch::Tensor,
                  int,
                  int,
                  int,
@@ -189,7 +182,6 @@ PYBIND11_MODULE(backend, m)
              py::arg("bucket_indices_in_buffer"),
              py::arg("bucketized_weights"),
              py::arg("random_noise"),
-             py::arg("index_tensor"),
              py::arg("membrane_voltages"),
              py::arg("synaptic_currents"),
              py::arg("last_spike_times"),
