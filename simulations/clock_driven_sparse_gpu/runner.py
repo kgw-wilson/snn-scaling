@@ -31,8 +31,6 @@ def clock_driven_sparse_gpu(sim_config: SimulationConfig, seed: int) -> None:
     (
         _,
         _,
-        _,
-        _,
         bucket_indices_in_buffer,
     ) = create_lookup_tensors(sim_config)
 
