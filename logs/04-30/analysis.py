@@ -10,10 +10,11 @@ def plot_results(results_path: str = "results.csv"):
     cases = [
         ("clock_driven_dense", "cpu", "Clock-Driven Dense (CPU)"),
         ("clock_driven_dense", "gpu", "Clock-Driven Dense (GPU)"),
-        ("event_driven", None, "Event-Driven"),
+        ("clock_driven_sparse_gpu", "gpu", "Clock-Driven Sparse (GPU)"),
+        ("event_driven", "cpu", "Event-Driven"),
     ]
 
-    fig, axes = plt.subplots(1, 3, figsize=(18, 6), sharex=True, sharey=True)
+    fig, axes = plt.subplots(1, 4, figsize=(18, 6), sharex=True, sharey=True)
     fig.suptitle("Runtime vs Connection Probability", fontsize=14)
 
     cmap = plt.get_cmap("tab10")
