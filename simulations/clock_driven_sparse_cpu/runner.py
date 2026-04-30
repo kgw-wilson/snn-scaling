@@ -35,8 +35,9 @@ def clock_driven_sparse_cpu(sim_config: SimulationConfig, seed: int):
     spikes_per_neuron, spikes_per_bin = create_spike_reporting_tensors(sim_config)
 
     sim = Simulation(
-        bucketized_weights_csr=bucketized_weights,
+        bucketized_weights=bucketized_weights,
         bucket_indices_in_buffer=bucket_indices_in_buffer,
+        random_noise=torch.empty_like(membrane_voltages),
         membrane_voltages=membrane_voltages,
         synaptic_currents=synaptic_currents,
         last_spike_times=last_spike_times,

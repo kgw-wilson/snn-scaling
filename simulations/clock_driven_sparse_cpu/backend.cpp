@@ -13,9 +13,6 @@
 
 namespace py = pybind11;
 
-using CsrMatrix = std::tuple<py::array_t<float>, py::array_t<int>, py::array_t<int>>;
-using CsrMatrixList = std::vector<CsrMatrix>;
-
 volatile sig_atomic_t timed_out = 0;
 
 class ClockDrivenSparseCpuSimulation
@@ -23,19 +20,17 @@ class ClockDrivenSparseCpuSimulation
 public:
     std::vector<sparse_matrix_t> mkl_matrices;
     matrix_descr descr;
+    torch::Tensor matmul_result;
 
+    std::vector<torch::Tensor> bucketized_weights;
     torch::Tensor bucket_indices_in_buffer;
-
+    torch::Tensor random_noise;
     torch::Tensor membrane_voltages;
     torch::Tensor synaptic_currents;
     torch::Tensor last_spike_times;
     torch::Tensor ring_buffer;
     torch::Tensor spikes_per_neuron;
     torch::Tensor spikes_per_bin;
-
-    torch::Tensor spikes_float;
-    torch::Tensor matmul_result;
-    torch::Tensor random_noise;
 
     int max_runtime;
     int num_neurons;
@@ -56,8 +51,9 @@ public:
     float threshold_voltage;
 
     ClockDrivenSparseCpuSimulation(
-        CsrMatrixList bucketized_weights_csr,
+        std::vector<torch::Tensor> bucketized_weights,
         torch::Tensor bucket_indices_in_buffer,
+        torch::Tensor random_noise,
         torch::Tensor membrane_voltages,
         torch::Tensor synaptic_currents,
         torch::Tensor last_spike_times,
@@ -80,7 +76,9 @@ public:
         float synaptic_decay,
         float resting_voltage,
         float threshold_voltage)
-        : bucket_indices_in_buffer(bucket_indices_in_buffer),
+        : bucketized_weights(bucketized_weights),
+          bucket_indices_in_buffer(bucket_indices_in_buffer),
+          random_noise(random_noise),
           membrane_voltages(membrane_voltages),
           synaptic_currents(synaptic_currents),
           last_spike_times(last_spike_times),
@@ -107,7 +105,7 @@ public:
     {
         descr.type = SPARSE_MATRIX_TYPE_GENERAL;
 
-        for (auto &[data, indices, indptr] : bucketized_weights_csr)
+        for (auto &[data, indices, indptr] : bucketized_weights)
         {
             auto d = data.unchecked<1>();
             auto idx = indices.unchecked<1>();
@@ -128,9 +126,7 @@ public:
             mkl_matrices.push_back(mat);
         }
 
-        spikes_float = torch::zeros({num_neurons});
         matmul_result = torch::zeros({num_neurons});
-        random_noise = torch::empty({num_neurons});
         torch::Tensor all_results = torch::zeros({num_buckets, num_neurons});
     }
 
@@ -168,9 +164,7 @@ public:
             membrane_voltages = torch::where(outside_refractory, new_voltages, membrane_voltages);
 
             torch::Tensor spikes_bool = membrane_voltages >= threshold_voltage;
-            spikes_float.copy_(spikes_bool.to(torch::kFloat32));
 
-            // Sparse matmul per bucket into ring buffer
             auto bucket_indices_t = bucket_indices_in_buffer[t];
             for (int bucket_idx = 0; bucket_idx < num_buckets; bucket_idx++)
             {
@@ -181,7 +175,7 @@ public:
                     1.0f,
                     mkl_matrices[bucket_idx],
                     descr,
-                    spikes_float.data_ptr<float>(),
+                    spikes_bool.to(torch::kFloat32).data_ptr<float>(),
                     0.0f,
                     matmul_result.data_ptr<float>());
 
@@ -209,7 +203,8 @@ PYBIND11_MODULE(backend, m)
 {
     py::class_<ClockDrivenSparseCpuSimulation>(m, "ClockDrivenSparseCpuSimulation")
         .def(py::init<
-                 CsrMatrixList,
+                 std::vector<torch::Tensor>,
+                 torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
@@ -233,8 +228,9 @@ PYBIND11_MODULE(backend, m)
                  float,
                  float,
                  float>(),
-             py::arg("bucketized_weights_csr"),
+             py::arg("bucketized_weights"),
              py::arg("bucket_indices_in_buffer"),
+             py::arg("random_noise"),
              py::arg("membrane_voltages"),
              py::arg("synaptic_currents"),
              py::arg("last_spike_times"),
