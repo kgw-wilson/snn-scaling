@@ -8,13 +8,13 @@ from shared.simulation_config import SimulationConfig
 from shared.monitoring import MonitoringWindow
 from shared.reporting import report_statistics, create_spike_reporting_tensors
 from shared.utils import create_state_variables
-from simulations.clock_driven_sparse_cpu.backend import (
-    ClockDrivenSparseCpuSimulation as Simulation,
+from simulations.clock_driven_sparse.backend import (
+    ClockDrivenSparseSimulation as Simulation,
 )
 
 
-def clock_driven_sparse_cpu(sim_config: SimulationConfig, seed: int):
-    """Run clock-driven SNN simulation on CPU using sparse csr matrix for weights"""
+def clock_driven_sparse(sim_config: SimulationConfig, seed: int):
+    """Run clock-driven SNN simulation using sparse csr matrices for weights"""
 
     torch.manual_seed(seed)
 
@@ -68,7 +68,7 @@ def clock_driven_sparse_cpu(sim_config: SimulationConfig, seed: int):
     if not result["timed_out"]:
         report_statistics(
             sim_config,
-            "clock_driven_sparse_cpu",
+            "clock_driven_sparse",
             monitor.elapsed_time,
             torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
             torch.tensor(result["spikes_per_bin"], dtype=torch.float32),

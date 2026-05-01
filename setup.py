@@ -10,13 +10,8 @@ ext_modules = [
         extra_compile_args=_EXTRA_COMPILE_ARGS,
     ),
     CppExtension(
-        "simulations.clock_driven_sparse_cpu.backend",
-        ["simulations/clock_driven_sparse_cpu/backend.cpp"],
-        extra_compile_args=_EXTRA_COMPILE_ARGS,
-    ),
-    CppExtension(
-        "simulations.clock_driven_sparse_gpu.backend",
-        ["simulations/clock_driven_sparse_gpu/backend.cpp"],
+        "simulations.clock_driven_sparse.backend",
+        ["simulations/clock_driven_sparse/backend.cpp"],
         extra_compile_args=_EXTRA_COMPILE_ARGS,
     ),
     CppExtension(

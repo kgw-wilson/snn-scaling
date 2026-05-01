@@ -12,7 +12,7 @@ namespace py = pybind11;
 
 volatile sig_atomic_t timed_out = 0;
 
-class ClockDrivenSparseGpuSimulation
+class ClockDrivenSparseSimulation
 {
 public:
     torch::Tensor bucket_indices_in_buffer;
@@ -43,7 +43,7 @@ public:
     float resting_voltage;
     float threshold_voltage;
 
-    ClockDrivenSparseGpuSimulation(
+    ClockDrivenSparseSimulation(
         torch::Tensor bucket_indices_in_buffer,
         std::vector<torch::Tensor> bucketized_weights,
         torch::Tensor random_noise,
@@ -152,7 +152,7 @@ public:
 
 PYBIND11_MODULE(backend, m)
 {
-    py::class_<ClockDrivenSparseGpuSimulation>(m, "ClockDrivenSparseGpuSimulation")
+    py::class_<ClockDrivenSparseSimulation>(m, "ClockDrivenSparseSimulation")
         .def(py::init<
                  torch::Tensor,
                  std::vector<torch::Tensor>,
@@ -204,5 +204,5 @@ PYBIND11_MODULE(backend, m)
              py::arg("synaptic_decay"),
              py::arg("resting_voltage"),
              py::arg("threshold_voltage"))
-        .def("run", &ClockDrivenSparseGpuSimulation::run);
+        .def("run", &ClockDrivenSparseSimulation::run);
 }
