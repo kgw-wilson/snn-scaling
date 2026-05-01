@@ -12,4 +12,4 @@ Unstructured output containing logs and analysis for simulation runs. Future res
 
 - `04-16`: Explores eager execution vs pytorch.compile for dense cpu simulation. pytorch.compile was dropped for subsequent experiments. See README in folder for more info.
 
-- `04-30`: Dense CPU/GPU and event-driven runtime results from RTX 4070S Ti and Xeon E5-2696 v4
+- `04-30`: Dense CPU/GPU, Sparse CPU/GPU, and event-driven runtime results from RTX 4070S Ti and Xeon E5-2696 v4

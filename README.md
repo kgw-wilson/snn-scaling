@@ -28,7 +28,7 @@ TODO:
 - Implement energy monitoring with intel rapl and nvidia-smi (and find neuromorphic monitoring solutions)
 - Run full parameter sweeps for each simulation across number of neurons, connection probability, delay structure, timestep size, spike_statistics, etc.
 
-Basic parameter sweep recording runtime is shown below:
+Basic parameter sweep recording runtime is shown below (RTX 4070S Ti and Xeon E5-2696 v4)
 
 ![Runtime Parameter Sweep](./logs/04-30/plot.png)
 
