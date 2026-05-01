@@ -1,44 +1,36 @@
 # SNN Scaling
 
-Status: all simulations running without errors and produce equivalent spike statistics for the same parameter values. The only exception to this is the neuromorphic simulation, which has been implemented but only runs in virtual mode since I do not have access to a board yet.
+## Problem Statement
 
-## Overview
-
-This repo is an experimental framework for studying the computational scaling properties of spiking neural network (SNN) simulations across hardware architectures.
-
-The goal of this project is to systematically characterize how simulation cost depends on:
-
-• Network size (N)
-
-• Connectivity density and mean degree
-
-• Spike statistics and dynamical regime
-
-• Execution model (dense, sparse, event-driven)
-
-• Data representation (dense matrix, sparse matrix, event queue)
-
-• Hardware architecture (CPU, GPU, neuromorphic platforms)
-
-Rather than focusing on task performance or learning, this repository investigates the systems-level behavior of SNN simulation itself.
+How do crossover points between SNN execution strategies (clock-driven, event-driven) vary across hardware platforms, (CPU/GPU/neuromorphic) and how do these crossover points shift depending on whether we optimize for runtime, memory, or energy efficiency? Furthermore, can these crossover points predict the performance of SNN simulators based on their underlying computational strategies (dense matmul, sparse matmul, event queues)?
 
 ## Motivation
 
-Spiking neural networks can be simulated using fundamentally different computational paradigms:
+There is currently little principled understanding of how spiking neural network (SNN) performance emerges from underlying computational primitives across different execution strategies and hardware platforms. As a result, practitioners often lack guidance when choosing between event-driven and time-driven simulators, especially under varying workload characteristics such as sparsity, network size, and temporal structure.
 
-• Dense clock-driven matrix operations
+Moreover, existing SNN simulators are typically evaluated as black boxes, without clearly relating system performance to the primitives used to schedule and propagate spikes over time. This makes it difficult to reason about performance bottlenecks or design targeted optimizations.
 
-• Sparse linear algebra
+The goal of this work is to bridge this gap by explicitly connecting computational primitives to system-level performance. This would enable more informed simulator selection and inform execution strategies that dynamically choose or switch primitives based on workload characteristics. In particular, this framework can help identify regions of the parameter space where neuromorphic hardware offers clear performance or efficiency advantages over conventional CPU/GPU-based execution.
 
-• Event-driven propagation
+## Status
 
-• Neuromorphic routing fabrics
+Most simulations running without errors and produce equivalent spike statistics for the same parameter values. 
 
-Each paradigm interacts differently with hardware architectures such as CPUs, GPUs, and neuromorphic chips.
+Spinnaker simulation is implemented but has not been configured or tested with an actual board.
 
-Understanding when dense simulation is optimal, when sparsity becomes advantageous, when event-driven approaches dominate, and where architectural crossover points occur is critical for developing principled scaling laws and guiding hardware-aware neural modeling.
+OpenMP simulation and Loihi simulation are not yet implemented.
 
-This project aims to isolate these tradeoffs.
+TODO:
+- Implement OpenMP simulation
+- Implement Loihi simulation
+- Find relevant SNN simulators and create simulation runners for them
+- Look into Loihi/Spinnaker board access
+- Implement energy monitoring with intel rapl and nvidia-smi (and find neuromorphic monitoring solutions)
+- Run full parameter sweeps for each simulation across number of neurons, connection probability, delay structure, timestep size, spike_statistics, etc.
+
+Basic parameter sweep recording runtime is shown below:
+
+![Runtime Parameter Sweep](./logs/04-30/plot.png)
 
 ## Setup
 
@@ -48,12 +40,6 @@ Assumes `pyenv` is installed and correctly using version from `.python-version`.
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-```
-
-If running sparse cpu simulation, you will need Intel's mkl library:
-
-```shell
-conda install mkl mkl-include
 ```
 
 Before running `python -m simulations.run_all`, the event-driven C++ backend will need to be compiled with:
