@@ -18,7 +18,7 @@ def clock_driven_sparse_cpu(sim_config: SimulationConfig, seed: int):
 
     torch.manual_seed(seed)
 
-    bucketized_weights, _ = build_sparse_weights_bucketized_by_delay(sim_config)
+    bucketized_weights, num_buckets = build_sparse_weights_bucketized_by_delay(sim_config)
 
     ring_buffer, buffer_size = create_ring_buffer(sim_config)
 
