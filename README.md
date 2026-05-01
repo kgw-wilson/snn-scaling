@@ -22,6 +22,7 @@ OpenMP simulation and Loihi simulation are not yet implemented.
 
 TODO:
 - Implement OpenMP simulation
+- Implement baseline simulations with randomly generated scheduled
 - Implement Loihi simulation
 - Find relevant SNN simulators and create simulation runners for them
 - Look into Loihi/Spinnaker board access
