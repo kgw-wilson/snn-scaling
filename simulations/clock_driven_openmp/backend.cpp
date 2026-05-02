@@ -1,9 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <torch/extension.h>
-#include <mkl.h>
-#include <mkl_spblas.h>
-#include <mkl_vsl.h>
+#include <omp.h>
 #include <signal.h>
 #include <unistd.h>
 #include <iostream>
@@ -13,18 +11,18 @@
 
 namespace py = pybind11;
 
-using CsrMatrixList = std::vector<CsrMatrix>;
-
 volatile sig_atomic_t timed_out = 0;
 
 class ClockDrivenOpenmpSimulation
 {
 public:
-    std::vector<sparse_matrix_t> mkl_matrices;
-    matrix_descr descr;
+    int pt_num_threads;
 
-    torch::Tensor bucket_indices_in_buffer;
-
+    torch::Tensor crow_indices;
+    torch::Tensor col_indices;
+    torch::Tensor weights;
+    torch::Tensor timestep_delays;
+    torch::Tensor random_noise;
     torch::Tensor membrane_voltages;
     torch::Tensor synaptic_currents;
     torch::Tensor last_spike_times;
@@ -32,14 +30,9 @@ public:
     torch::Tensor spikes_per_neuron;
     torch::Tensor spikes_per_bin;
 
-    torch::Tensor spikes_float;
-    torch::Tensor matmul_result;
-    torch::Tensor random_noise;
-
     int max_runtime;
     int num_neurons;
     int num_timesteps;
-    int num_buckets;
     int num_bins;
     int buffer_size;
     int timesteps_per_bin;
@@ -55,8 +48,11 @@ public:
     float threshold_voltage;
 
     ClockDrivenOpenmpSimulation(
-        CsrMatrixList bucketized_weights_csr,
-        torch::Tensor bucket_indices_in_buffer,
+        torch::Tensor crow_indices,
+        torch::Tensor col_indices,
+        torch::Tensor weights,
+        torch::Tensor timestep_delays,
+        torch::Tensor random_noise,
         torch::Tensor membrane_voltages,
         torch::Tensor synaptic_currents,
         torch::Tensor last_spike_times,
@@ -66,7 +62,6 @@ public:
         int max_runtime,
         int num_neurons,
         int num_timesteps,
-        int num_buckets,
         int num_bins,
         int buffer_size,
         int timesteps_per_bin,
@@ -79,7 +74,11 @@ public:
         float synaptic_decay,
         float resting_voltage,
         float threshold_voltage)
-        : bucket_indices_in_buffer(bucket_indices_in_buffer),
+        : crow_indices(crow_indices),
+          col_indices(col_indices),
+          weights(weights),
+          timestep_delays(timestep_delays),
+          random_noise(random_noise),
           membrane_voltages(membrane_voltages),
           synaptic_currents(synaptic_currents),
           last_spike_times(last_spike_times),
@@ -89,7 +88,6 @@ public:
           max_runtime(max_runtime),
           num_neurons(num_neurons),
           num_timesteps(num_timesteps),
-          num_buckets(num_buckets),
           num_bins(num_bins),
           buffer_size(buffer_size),
           timesteps_per_bin(timesteps_per_bin),
@@ -104,39 +102,7 @@ public:
           resting_voltage(resting_voltage),
           threshold_voltage(threshold_voltage)
     {
-        descr.type = SPARSE_MATRIX_TYPE_GENERAL;
-
-        for (auto &[data, indices, indptr] : bucketized_weights_csr)
-        {
-            auto d = data.unchecked<1>();
-            auto idx = indices.unchecked<1>();
-            auto ptr = indptr.unchecked<1>();
-
-            sparse_matrix_t mat;
-            mkl_sparse_s_create_csr(
-                &mat,
-                SPARSE_INDEX_BASE_ZERO,
-                num_neurons,
-                num_neurons,
-                const_cast<int *>(ptr.data(0)),
-                const_cast<int *>(ptr.data(0)) + 1,
-                const_cast<int *>(idx.data(0)),
-                const_cast<float *>(d.data(0)));
-
-            mkl_sparse_optimize(mat);
-            mkl_matrices.push_back(mat);
-        }
-
-        spikes_float = torch::zeros({num_neurons});
-        matmul_result = torch::zeros({num_neurons});
-        random_noise = torch::empty({num_neurons});
-        torch::Tensor all_results = torch::zeros({num_buckets, num_neurons});
-    }
-
-    ~ClockDrivenOpenmpSimulation()
-    {
-        for (auto &mat : mkl_matrices)
-            mkl_sparse_destroy(mat);
+        pt_num_threads = torch::get_num_threads();
     }
 
     py::dict run()
@@ -145,6 +111,18 @@ public:
         signal(SIGALRM, [](int)
                { timed_out = 1; });
         alarm(max_runtime);
+
+        auto crow = crow_indices.accessor<int, 1>();
+        auto col = col_indices.accessor<int, 1>();
+        auto w = weights.accessor<float, 1>();
+        auto d = timestep_delays.accessor<int, 1>();
+        // auto mv = membrane_voltages.accessor<float, 1>();
+        // auto sc = synaptic_currents.accessor<float, 1>();
+        // auto lut = last_update_times.accessor<float, 1>();
+        // auto lvut = last_voltage_update_times.accessor<float, 1>();
+        // auto lst = last_spike_times.accessor<float, 1>();
+        // auto spn = spikes_per_neuron.accessor<int, 1>();
+        // auto spb = spikes_per_bin.accessor<int, 1>();
 
         int buffer_index = 0;
 
@@ -167,25 +145,52 @@ public:
             membrane_voltages = torch::where(outside_refractory, new_voltages, membrane_voltages);
 
             torch::Tensor spikes_bool = membrane_voltages >= threshold_voltage;
-            spikes_float.copy_(spikes_bool.to(torch::kFloat32));
+            // Added
+            torch::Tensor spiking_indices = spikes_bool.nonzero().squeeze(1).to(torch::kInt32);
+            int n_spikes = spiking_indices.size(0);
+            int *spiking_indices_ptr = spiking_indices.data_ptr<int32_t>();
 
-            // Sparse matmul per bucket into ring buffer
-            auto bucket_indices_t = bucket_indices_in_buffer[t];
-            for (int bucket_idx = 0; bucket_idx < num_buckets; bucket_idx++)
+            // for (int bucket_idx = 0; bucket_idx < num_buckets; bucket_idx++)
+            // {
+            //     ring_buffer[bucket_indices_in_buffer[t][bucket_idx]].add_(
+            //         torch::mv(bucketized_weights[bucket_idx], spikes_bool.to(torch::kFloat32)));
+            // }
+            torch::set_num_threads(1);
+
+#pragma omp parallel for schedule(static) num_threads(pt_num_threads)
+            for (int src = 0; src < num_neurons; src++)
             {
-                int target_idx = bucket_indices_t[bucket_idx].item<int>();
+                if (!spikes_bool[src].item<bool>())
+                {
+                    continue;
+                }
 
-                mkl_sparse_s_mv(
-                    SPARSE_OPERATION_NON_TRANSPOSE,
-                    1.0f,
-                    mkl_matrices[bucket_idx],
-                    descr,
-                    spikes_float.data_ptr<float>(),
-                    0.0f,
-                    matmul_result.data_ptr<float>());
+                int start = crow[src];
+                int end = crow[src + 1];
 
-                ring_buffer[target_idx].add_(matmul_result);
+                for (int j = start; j < end; j++)
+                {
+                    int dst_idx = col[j];
+                    int cur_buffer_idx = (buffer_index + d[j]) % buffer_size;
+#pragma omp atomic
+                    ring_buffer[cur_buffer_idx][dst_idx] += w[j];
+                }
             }
+            // #pragma omp parallel for schedule(static) num_threads(pt_num_threads)
+            //             for (int i = 0; i < n_spikes; i++)
+            //             {
+            //                 int spiking_index = spiking_indices_ptr[i];
+            //                 int start = crow[spiking_index];
+            //                 int end = crow[spiking_index + 1];
+            //                 for (int j = start; j < end; j++)
+            //                 {
+            //                     int target_idx = col[j];
+            //                     int cur_buffer_idx = (buffer_index + d[j]) % buffer_size; // TODO: target_idx instead of j here?
+            //                     ring_buffer[cur_buffer_idx][target_idx] += w[j];
+            //                 }
+            //             }
+
+            torch::set_num_threads(pt_num_threads);
 
             ring_buffer[buffer_index].zero_();
             membrane_voltages = torch::where(spikes_bool, resting_voltage, membrane_voltages);
@@ -208,7 +213,6 @@ PYBIND11_MODULE(backend, m)
 {
     py::class_<ClockDrivenOpenmpSimulation>(m, "ClockDrivenOpenmpSimulation")
         .def(py::init<
-                 CsrMatrixList,
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
@@ -216,7 +220,10 @@ PYBIND11_MODULE(backend, m)
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
-                 int,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
+                 torch::Tensor,
                  int,
                  int,
                  int,
@@ -232,8 +239,11 @@ PYBIND11_MODULE(backend, m)
                  float,
                  float,
                  float>(),
-             py::arg("bucketized_weights_csr"),
-             py::arg("bucket_indices_in_buffer"),
+             py::arg("crow_indices"),
+             py::arg("col_indices"),
+             py::arg("weights"),
+             py::arg("timestep_delays"),
+             py::arg("random_noise"),
              py::arg("membrane_voltages"),
              py::arg("synaptic_currents"),
              py::arg("last_spike_times"),
@@ -243,7 +253,6 @@ PYBIND11_MODULE(backend, m)
              py::arg("max_runtime"),
              py::arg("num_neurons"),
              py::arg("num_timesteps"),
-             py::arg("num_buckets"),
              py::arg("num_bins"),
              py::arg("buffer_size"),
              py::arg("timesteps_per_bin"),
