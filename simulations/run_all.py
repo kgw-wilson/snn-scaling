@@ -4,7 +4,6 @@ from shared.simulation_config import SimulationConfig
 from shared.utils import get_available_devices
 from simulations.clock_driven_dense.runner import clock_driven_dense
 from simulations.clock_driven_sparse.runner import clock_driven_sparse
-from simulations.clock_driven_openmp.runner import clock_driven_openmp
 from simulations.event_driven.runner import event_driven_cpu
 
 _CONNECTION_PROBS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
@@ -16,7 +15,6 @@ _DEVICE_TO_SIMULATIONS = {
     "cpu": [
         # clock_driven_dense,
         # clock_driven_sparse,
-        clock_driven_openmp,
         # event_driven_cpu,
     ],
     "gpu": [

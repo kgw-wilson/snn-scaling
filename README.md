@@ -21,7 +21,6 @@ Spinnaker simulation is implemented but has not been configured or tested with a
 OpenMP simulation and Loihi simulation are not yet implemented.
 
 TODO:
-- Implement OpenMP simulation
 - Implement baseline simulations with randomly generated scheduled current
 - Implement Loihi simulation
 - Find relevant SNN simulators and create simulation runners for them
@@ -43,7 +42,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Before running `python -m simulations.run_all`, the event-driven C++ backend will need to be compiled with:
+Before running `python -m simulations.run_all`, C++ backends will need to be compiled with:
 
 ```shell
 python setup.py build_ext --inplace   

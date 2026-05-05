@@ -15,11 +15,6 @@ ext_modules = [
         extra_compile_args=_EXTRA_COMPILE_ARGS,
     ),
     CppExtension(
-        "simulations.clock_driven_openmp.backend",
-        ["simulations/clock_driven_openmp/backend.cpp"],
-        extra_compile_args=_EXTRA_COMPILE_ARGS,
-    ),
-    CppExtension(
         "simulations.event_driven.backend",
         ["simulations/event_driven/backend.cpp"],
         extra_compile_args=_EXTRA_COMPILE_ARGS,
