@@ -18,12 +18,12 @@ Most simulations running without errors and produce equivalent spike statistics 
 
 Spinnaker simulation is implemented but has not been configured or tested with an actual board.
 
-OpenMP simulation and Loihi simulation are not yet implemented.
+Loihi simulation is not yet implemented.
 
 TODO:
+- Find relevant SNN simulators and create simulation runners for them
 - Implement baseline simulations with randomly generated scheduled current
 - Implement Loihi simulation
-- Find relevant SNN simulators and create simulation runners for them
 - Look into Loihi/Spinnaker board access
 - Implement energy monitoring with intel rapl and nvidia-smi (and find neuromorphic monitoring solutions)
 - Run full parameter sweeps for each simulation across number of neurons, connection probability, delay structure, timestep size, spike_statistics, etc.
