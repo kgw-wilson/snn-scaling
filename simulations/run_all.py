@@ -5,6 +5,7 @@ from shared.utils import get_available_devices
 from simulations.clock_driven_dense.runner import clock_driven_dense
 from simulations.clock_driven_sparse.runner import clock_driven_sparse
 from simulations.event_driven.runner import event_driven_cpu
+from simulations.brian2.runner import clock_driven_brian2
 
 _CONNECTION_PROBS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
 _NUM_NEURONS = [10, 100, 1000, 10000]
@@ -16,6 +17,7 @@ _DEVICE_TO_SIMULATIONS = {
         # clock_driven_dense,
         # clock_driven_sparse,
         # event_driven_cpu,
+        clock_driven_brian2
     ],
     "gpu": [
         # clock_driven_dense,
@@ -70,7 +72,7 @@ if __name__ == "__main__":
                         # of timestep so neurons will not fire again in the same timestep which is crucial for correctness
                         # in the event-driven simulation.
                         sim_config = SimulationConfig(
-                            max_runtime=5*60,
+                            max_runtime=5 * 60,
                             num_neurons=num_neurons,
                             connection_prob=connection_prob,
                             device_str=device,
@@ -85,10 +87,14 @@ if __name__ == "__main__":
                                 20e-3
                                 / (10.0 * math.sqrt(num_neurons * connection_prob))
                             ),
-                            poisson_rate=50.0,
+                            poisson_rate=20.0,
                             poisson_weight=(
-                                (num_neurons * connection_prob * 20e-3)
-                                / (10.0 * math.sqrt(num_neurons * connection_prob))
+                                20e-3
+                                / (
+                                    10.0
+                                    * 20.0
+                                    * math.sqrt(num_neurons * connection_prob)
+                                )
                             ),
                             bin_rate=10e-3,
                             min_delay=1e-3 * 2,
