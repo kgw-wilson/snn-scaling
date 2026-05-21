@@ -19,7 +19,6 @@ public:
     torch::Tensor bucketized_weights;
     torch::Tensor random_noise;
     torch::Tensor membrane_voltages;
-    torch::Tensor synaptic_currents;
     torch::Tensor last_spike_times;
     torch::Tensor ring_buffer;
     torch::Tensor spikes_per_neuron;
@@ -32,13 +31,10 @@ public:
     int buffer_size;
     int timesteps_per_bin;
     float timestep;
-    float resistance;
-    float poisson_weight;
+    float weight;
     float poisson_prob;
     float refractory_period;
     float membrane_decay;
-    float one_minus_decay;
-    float synaptic_decay;
     float resting_voltage;
     float threshold_voltage;
 
@@ -47,7 +43,6 @@ public:
         torch::Tensor bucketized_weights,
         torch::Tensor random_noise,
         torch::Tensor membrane_voltages,
-        torch::Tensor synaptic_currents,
         torch::Tensor last_spike_times,
         torch::Tensor ring_buffer,
         torch::Tensor spikes_per_neuron,
@@ -59,19 +54,16 @@ public:
         int buffer_size,
         int timesteps_per_bin,
         float timestep,
-        float resistance,
-        float poisson_weight,
+        float weight,
         float poisson_prob,
         float refractory_period,
         float membrane_decay,
-        float synaptic_decay,
         float resting_voltage,
         float threshold_voltage)
         : bucket_indices_in_buffer(bucket_indices_in_buffer),
           bucketized_weights(bucketized_weights),
           random_noise(random_noise),
           membrane_voltages(membrane_voltages),
-          synaptic_currents(synaptic_currents),
           last_spike_times(last_spike_times),
           ring_buffer(ring_buffer),
           spikes_per_neuron(spikes_per_neuron),
@@ -83,13 +75,10 @@ public:
           buffer_size(buffer_size),
           timesteps_per_bin(timesteps_per_bin),
           timestep(timestep),
-          resistance(resistance),
-          poisson_weight(poisson_weight),
+          weight(weight),
           poisson_prob(poisson_prob),
           refractory_period(refractory_period),
           membrane_decay(membrane_decay),
-          one_minus_decay(1.0f - membrane_decay),
-          synaptic_decay(synaptic_decay),
           resting_voltage(resting_voltage),
           threshold_voltage(threshold_voltage)
     {
@@ -104,22 +93,28 @@ public:
 
         int buffer_index = 0;
 
+        torch::Tensor new_voltages = torch::empty_like(membrane_voltages);
+
         for (int t = 0; t < num_timesteps && !timed_out; t++)
         {
             float current_time = t * timestep;
             buffer_index = (buffer_index + 1) % buffer_size;
             int bin_idx = t / timesteps_per_bin;
 
-            random_noise.uniform_();
+            // random_noise.uniform_();
 
-            synaptic_currents.mul_(synaptic_decay);
-            synaptic_currents.add_(ring_buffer[buffer_index]);
-            synaptic_currents.add_(poisson_weight * (random_noise < poisson_prob));
+            random_noise.fill_(poisson_prob);                            // added
+            torch::Tensor poisson_counts = torch::poisson(random_noise); // added
+            
+            // std::cout << poisson_counts.sum().item<float>() << " spikes from Poisson input at time " << current_time << std::endl; // added
 
             torch::Tensor outside_refractory = (current_time - last_spike_times) >= refractory_period;
 
-            torch::Tensor alpha = synaptic_currents * resistance + resting_voltage;
-            torch::Tensor new_voltages = alpha * one_minus_decay + membrane_voltages * membrane_decay;
+            new_voltages = resting_voltage + (membrane_voltages - resting_voltage) * membrane_decay;
+            new_voltages.add_(ring_buffer[buffer_index]);
+            // new_voltages.add_(weight * (random_noise < poisson_prob));
+            new_voltages.add_(weight * poisson_counts); // added
+
             membrane_voltages = torch::where(outside_refractory, new_voltages, membrane_voltages);
 
             torch::Tensor spikes_bool = membrane_voltages >= threshold_voltage;
@@ -158,15 +153,12 @@ PYBIND11_MODULE(backend, m)
                  torch::Tensor,
                  torch::Tensor,
                  torch::Tensor,
-                 torch::Tensor,
                  int,
                  int,
                  int,
                  int,
                  int,
                  int,
-                 float,
-                 float,
                  float,
                  float,
                  float,
@@ -178,7 +170,6 @@ PYBIND11_MODULE(backend, m)
              py::arg("bucketized_weights"),
              py::arg("random_noise"),
              py::arg("membrane_voltages"),
-             py::arg("synaptic_currents"),
              py::arg("last_spike_times"),
              py::arg("ring_buffer"),
              py::arg("spikes_per_neuron"),
@@ -190,12 +181,10 @@ PYBIND11_MODULE(backend, m)
              py::arg("buffer_size"),
              py::arg("timesteps_per_bin"),
              py::arg("timestep"),
-             py::arg("resistance"),
-             py::arg("poisson_weight"),
+             py::arg("weight"),
              py::arg("poisson_prob"),
              py::arg("refractory_period"),
              py::arg("membrane_decay"),
-             py::arg("synaptic_decay"),
              py::arg("resting_voltage"),
              py::arg("threshold_voltage"))
         .def("run", &ClockDrivenDenseSimulation::run);

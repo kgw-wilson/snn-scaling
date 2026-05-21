@@ -10,29 +10,21 @@ class SimulationConfig:
 
     Time-related constants are in seconds. Voltage variables
     are in millivolts. Rates are in Hz.
-
-    Membrane/synatic time constants determine how quickly membrane
-    voltage or synaptic current, respectively, decays after a spike.
-    Poisson variables determine the frequency and strength of external
-    Poisson input which drives activity in the network. The Bernoulli
-    appoximation to a Poisson process is used, so poisson_prob
-    should be << 1 for accuracy.
     """
-    
+
     max_runtime: int
     num_neurons: int
+    inhibitory_fraction: float
     connection_prob: float
     device_str: str
     timestep: float
     simulation_time: float
-    resistance: float
-    capacitance: float
-    synaptic_time_constant: float
+    membrane_time_constant: float
+    inhibitory_weight_multiplier: float
     resting_voltage: float
     threshold_voltage: float
-    poisson_rate: float
-    poisson_weight: float
-    recurrent_weight: float
+    poisson_rate_multiplier: float
+    weight: float
     bin_rate: float
     min_delay: float
     max_delay: float
@@ -47,12 +39,16 @@ class SimulationConfig:
         return None
 
     @property
-    def num_timesteps(self) -> int:
-        return int(self.simulation_time / self.timestep)
+    def num_inhibitory(self) -> int:
+        return int(self.num_neurons * self.inhibitory_fraction)
 
     @property
-    def membrane_time_constant(self) -> float:
-        return self.resistance * self.capacitance
+    def num_excitatory(self) -> int:
+        return self.num_neurons - self.num_inhibitory
+
+    @property
+    def num_timesteps(self) -> int:
+        return int(self.simulation_time / self.timestep)
 
     @property
     def membrane_decay(self):
@@ -65,19 +61,23 @@ class SimulationConfig:
         return math.exp(-self.timestep / self.membrane_time_constant)
 
     @property
-    def synaptic_decay(self):
+    def poisson_rate(self) -> float:
         """
-        Calculate synaptic current decay factor based on timestep and synaptic time constant
+        Calculate poisson input rate
 
-        Assumes every neuron is updated at each fixed timestep, which is not the case
-        for event-driven simulations.
+        Uses https://brian2.readthedocs.io/en/stable/examples/frompapers.Brunel_2000.html
         """
-        return math.exp(-self.timestep / self.synaptic_time_constant)
+        num_excitatory_conn = self.connection_prob * self.num_excitatory
+        threshold_rate = self.threshold_voltage / (
+            self.weight * num_excitatory_conn * self.membrane_time_constant
+        )
+        return self.poisson_rate_multiplier * threshold_rate
 
     @property
     def poisson_prob(self) -> float:
         """Converts poisson spikes per second to probability of poisson spike per timestep"""
-        return self.poisson_rate * self.timestep
+        # return self.poisson_rate * self.timestep
+        return self.poisson_rate * self.timestep * (self.connection_prob * self.num_excitatory)
 
     @property
     def num_bins(self) -> int:
@@ -100,12 +100,17 @@ class SimulationConfig:
                 f"number of neurons must be a positive integer, got {self.num_neurons}"
             )
 
+        if not isinstance(self.connection_prob, float) or not self.connection_prob > 0:
+            raise ValueError(
+                f"connection probability must be float > 0, got {self.connection_prob}"
+            )
+
         if (
-            not isinstance(self.connection_prob, (float, int))
-            or not 0 < self.connection_prob <= 1
+            not isinstance(self.inhibitory_weight_multiplier, float)
+            or self.inhibitory_weight_multiplier > 0
         ):
             raise ValueError(
-                f"connection probability must be in (0,1], got {self.connection_prob}"
+                f"inhibitory weight multiplier must be non-positive float, got {self.inhibitory_weight_multiplier}"
             )
 
         if not isinstance(self.timestep, float) or self.timestep <= 0:
@@ -127,20 +132,9 @@ class SimulationConfig:
                 f"membrane time constant must be positive float, got {self.membrane_time_constant}"
             )
 
-        if (
-            not isinstance(self.synaptic_time_constant, float)
-            or self.synaptic_time_constant <= 0
-        ):
+        if self.timestep >= self.membrane_time_constant:
             raise ValueError(
-                f"synaptic time constant must be positive float, got {self.synaptic_time_constant}"
-            )
-
-        if self.timestep >= min(
-            self.membrane_time_constant, self.synaptic_time_constant
-        ):
-            raise ValueError(
-                "timestep should be smaller than both membrane time constant "
-                "and synaptic time constant for numerical stability"
+                "timestep should be smaller than membrane time constant for numerical stability"
             )
 
         if not isinstance(self.resting_voltage, float):
@@ -161,22 +155,8 @@ class SimulationConfig:
                 f"poisson_rate must be positive float, got {self.poisson_rate}"
             )
 
-        if not isinstance(self.poisson_weight, float) or self.poisson_rate <= 0:
-            raise TypeError(
-                f"poisson_weight must be positive float, got {self.poisson_rate}"
-            )
-
-        if not isinstance(self.recurrent_weight, float) or self.recurrent_weight <= 0:
-            raise TypeError(
-                f"recurrent_weight must be positive float, got {self.recurrent_weight}"
-            )
-
-        if self.poisson_prob >= 1 or self.poisson_prob > 0.1:
-            raise ValueError(
-                "poisson_rate * timestep must be in (0, 0.1]."
-                f"Got poisson_prob={self.poisson_prob:.4f}. "
-                "Decrease timestep or poisson_rate."
-            )
+        if not isinstance(self.weight, float) or self.weight <= 0:
+            raise TypeError(f"weight must be positive float, got {self.weight}")
 
         if not isinstance(self.bin_rate, float) or self.bin_rate <= 0:
             raise ValueError(f"bin_rate must be a positive float, got {self.bin_rate}")

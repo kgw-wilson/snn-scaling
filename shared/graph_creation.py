@@ -25,7 +25,7 @@ def create_er_dense(sim_config: SimulationConfig) -> torch.Tensor:
 
     weights = torch.full(
         (sim_config.num_neurons, sim_config.num_neurons),
-        fill_value=sim_config.recurrent_weight,
+        fill_value=sim_config.weight,
         device=sim_config.device,
         dtype=torch.float32,
     )
@@ -38,7 +38,14 @@ def create_er_dense(sim_config: SimulationConfig) -> torch.Tensor:
     connectivity_mask = torch.zeros((N, N), dtype=torch.bool, device=sim_config.device)
     connectivity_mask[rows, cols] = True
 
-    weights = weights * connectivity_mask
+    neuron_types = torch.zeros(N, device=sim_config.device, dtype=torch.bool)
+    neuron_types[: sim_config.num_inhibitory] = True
+    neuron_types = neuron_types[torch.randperm(N, device=sim_config.device)]
+
+    ei_scale = torch.ones((N, N), device=sim_config.device)
+    ei_scale[:, neuron_types] *= sim_config.inhibitory_weight_multiplier
+
+    weights = weights * connectivity_mask * ei_scale
 
     return weights
 

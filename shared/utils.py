@@ -1,5 +1,6 @@
-import pyNN.spiNNaker as p
+import hashlib
 import torch
+import pyNN.spiNNaker as p
 from shared.simulation_config import SimulationConfig
 
 
@@ -72,3 +73,11 @@ def get_available_devices() -> list[str]:
         pass
 
     return available_devices
+
+
+def get_deterministic_seed(*args) -> int:
+    """Generate a seed that is constant between interpreter runs for the given args"""
+
+    data = repr(args).encode()
+    hashed_bytes = hashlib.blake2b(data, digest_size=8).digest()
+    return int.from_bytes(hashed_bytes) % (2**32)

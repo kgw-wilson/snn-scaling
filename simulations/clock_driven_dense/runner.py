@@ -22,9 +22,7 @@ def clock_driven_dense(sim_config: SimulationConfig, seed: int) -> None:
 
     ring_buffer, buffer_size = create_ring_buffer(sim_config)
 
-    membrane_voltages, synaptic_currents, last_spike_times = create_state_variables(
-        sim_config
-    )
+    membrane_voltages, _, last_spike_times = create_state_variables(sim_config)
 
     (
         _,
@@ -39,7 +37,6 @@ def clock_driven_dense(sim_config: SimulationConfig, seed: int) -> None:
         bucketized_weights=bucketized_weights,
         random_noise=torch.empty_like(membrane_voltages),
         membrane_voltages=membrane_voltages,
-        synaptic_currents=synaptic_currents,
         last_spike_times=last_spike_times,
         ring_buffer=ring_buffer,
         spikes_per_neuron=spikes_per_neuron,
@@ -51,12 +48,10 @@ def clock_driven_dense(sim_config: SimulationConfig, seed: int) -> None:
         buffer_size=buffer_size,
         timesteps_per_bin=sim_config.timesteps_per_bin,
         timestep=sim_config.timestep,
-        resistance=sim_config.resistance,
-        poisson_weight=sim_config.poisson_weight,
+        weight=sim_config.weight,
         poisson_prob=sim_config.poisson_prob,
         refractory_period=sim_config.refractory_period,
         membrane_decay=sim_config.membrane_decay,
-        synaptic_decay=sim_config.synaptic_decay,
         resting_voltage=sim_config.resting_voltage,
         threshold_voltage=sim_config.threshold_voltage,
     )
@@ -69,6 +64,6 @@ def clock_driven_dense(sim_config: SimulationConfig, seed: int) -> None:
             sim_config,
             "clock_driven_dense",
             monitor.elapsed_time,
-            torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
-            torch.tensor(result["spikes_per_bin"], dtype=torch.float32),
+            result["spikes_per_neuron"],
+            result["spikes_per_bin"],
         )
