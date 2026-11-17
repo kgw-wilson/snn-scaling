@@ -1,33 +1,43 @@
 import math
 
+import torch
+
+from shared.reporting import RESULTS_PATH
 from shared.simulation_config import SimulationConfig
-from shared.utils import get_available_devices
+from shared.utils import get_available_devices, get_deterministic_seed
 from simulations.clock_driven_dense.runner import clock_driven_dense
-from simulations.clock_driven_sparse.runner import clock_driven_sparse
 from simulations.clock_driven_openmp.runner import clock_driven_openmp
+from simulations.clock_driven_sparse.runner import clock_driven_sparse
 from simulations.event_driven.runner import event_driven_cpu
 
 _CONNECTION_PROBS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1]
 _NUM_NEURONS = [10, 100, 1000, 10000]
-_NUM_REPEATS = 1
-_BASE_SEED = 42
+_NUM_REPEATS = 3
+_NUM_THREADS = 22  # physical cores on the Xeon E5-2696 v4
 
 _DEVICE_TO_SIMULATIONS = {
     "cpu": [
-        # clock_driven_dense,
-        # clock_driven_sparse,
+        clock_driven_dense,
+        clock_driven_sparse,
         clock_driven_openmp,
-        # event_driven_cpu,
+        event_driven_cpu,
     ],
     "gpu": [
-        # clock_driven_dense,
-        # clock_driven_sparse,
+        clock_driven_dense,
+        clock_driven_sparse,
     ],
     "neuromorphic": [],
 }
 
 
 if __name__ == "__main__":
+
+    if RESULTS_PATH.exists():
+        raise SystemExit(
+            f"{RESULTS_PATH} exists, move it before starting a new run."
+        )
+
+    torch.set_num_threads(_NUM_THREADS)
 
     available_devices = get_available_devices()
 
@@ -46,18 +56,8 @@ if __name__ == "__main__":
                             f"{simulation.__name__}, {device=}, {num_neurons=}, {connection_prob=}"
                         )
 
-                        # Ensure same configuration always produces same seed
-                        seed = (
-                            hash(
-                                (
-                                    _BASE_SEED,
-                                    repeat_i,
-                                    simulation.__name__,
-                                    num_neurons,
-                                    connection_prob,
-                                )
-                            )
-                            % 2**32
+                        seed = get_deterministic_seed(
+                            repeat_i, num_neurons, connection_prob
                         )
 
                         # Set resting voltage to 0 for simplicity. Resistance * Capacitance should be around 5-20 ms.
@@ -72,7 +72,7 @@ if __name__ == "__main__":
                         # of timestep so neurons will not fire again in the same timestep which is crucial for correctness
                         # in the event-driven simulation.
                         sim_config = SimulationConfig(
-                            max_runtime=5*60,
+                            max_runtime=5 * 60,
                             num_neurons=num_neurons,
                             connection_prob=connection_prob,
                             device_str=device,
