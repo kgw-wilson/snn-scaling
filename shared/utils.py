@@ -1,13 +1,14 @@
-import pyNN.spiNNaker as p
+import hashlib
+
 import torch
+
 from shared.simulation_config import SimulationConfig
 
 
 def create_state_variables(
     sim_config: SimulationConfig,
 ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
-    """
-    Initialize dynamic neuron state variables for the LIF simulation
+    """Initialize dynamic neuron state variables for an LIF simulation
 
     Returns:
         membrane_voltages - membrane potential per neuron
@@ -49,26 +50,41 @@ def create_delays(sim_config: SimulationConfig) -> torch.Tensor:
 
 
 def get_available_devices() -> list[str]:
-    """Returns list of all available device names
-
-    This method for checking access to an actual SpiNNaker machine
-    is hacky, but the package does not appear to surface an official
-    means for checking access to hardware.
-    """
+    """Returns list of all available device names"""
 
     available_devices = ["cpu"]
 
     if torch.cuda.is_available():
         available_devices.append("gpu")
 
-    try:
-        p.setup()
-        if "virtual" in str(p.get_machine()).lower():
-            pass
-        else:
-            available_devices.append("neuromorphic")
-        p.end()
-    except:
-        pass
+    if _has_spinnaker_board():
+        available_devices.append("neuromorphic")
 
     return available_devices
+
+
+def get_deterministic_seed(*args) -> int:
+    """Generates seed that's constant between interpreter runs for the given args"""
+
+    data = repr(args).encode()
+    hashed_bytes = hashlib.blake2b(data, digest_size=8).digest()
+    return int.from_bytes(hashed_bytes) % (2**32)
+
+
+def _has_spinnaker_board() -> bool:
+    """True only if sPyNNaker can reach real hardware (not a virtual board)
+
+    This check is hacky, but the package does not appear to surface an official
+    means for checking access to hardware. Any failure means no usable board.
+    """
+
+    try:
+        import pyNN.spiNNaker as p
+
+        p.setup()
+        try:
+            return "virtual" not in str(p.get_machine()).lower()
+        finally:
+            p.end()
+    except Exception:
+        return False
