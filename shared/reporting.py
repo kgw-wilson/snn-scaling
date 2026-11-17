@@ -1,9 +1,9 @@
-import torch
-from shared.simulation_config import SimulationConfig
-
-
 import csv
 from pathlib import Path
+
+import torch
+
+from shared.simulation_config import SimulationConfig
 
 _RESULTS_PATH = Path("results.csv")
 
@@ -15,8 +15,7 @@ def report_statistics(
     spikes_per_neuron: torch.Tensor,
     spikes_per_bin: torch.Tensor,
 ) -> None:
-    """
-    Save statistics to CSV after a simulation run
+    """Save statistics to CSV after a simulation run
 
     Args:
         sim_config: SimulationConfig contains simulation parameters
@@ -51,8 +50,7 @@ def report_statistics(
 def create_spike_reporting_tensors(
     sim_config: SimulationConfig,
 ) -> tuple[torch.Tensor, torch.Tensor]:
-    """
-    Initialize tensors used for spike-count statistics during simulation
+    """Initialize tensors used for spike-count statistics during simulation
 
     Assumes consumers of the function will bin indices when updating
     spikes_per_bin. No normalization is applied, values represent raw
