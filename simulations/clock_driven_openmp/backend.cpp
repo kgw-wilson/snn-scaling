@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <iostream>
 #include <vector>
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
@@ -16,8 +17,6 @@ volatile sig_atomic_t timed_out = 0;
 class ClockDrivenOpenmpSimulation
 {
 public:
-    int pt_num_threads;
-
     torch::Tensor crow_indices;
     torch::Tensor col_indices;
     torch::Tensor weights;
@@ -102,7 +101,6 @@ public:
           resting_voltage(resting_voltage),
           threshold_voltage(threshold_voltage)
     {
-        pt_num_threads = torch::get_num_threads();
     }
 
     py::dict run()
@@ -116,20 +114,15 @@ public:
         auto col = col_indices.accessor<int, 1>();
         auto w = weights.accessor<float, 1>();
         auto d = timestep_delays.accessor<int, 1>();
-        // auto mv = membrane_voltages.accessor<float, 1>();
-        // auto sc = synaptic_currents.accessor<float, 1>();
-        // auto lut = last_update_times.accessor<float, 1>();
-        // auto lvut = last_voltage_update_times.accessor<float, 1>();
-        // auto lst = last_spike_times.accessor<float, 1>();
-        // auto spn = spikes_per_neuron.accessor<int, 1>();
-        // auto spb = spikes_per_bin.accessor<int, 1>();
+        auto ring = ring_buffer.accessor<float, 2>();
 
-        int buffer_index = 0;
+        std::vector<int> spiking;
+        spiking.reserve(num_neurons);
 
         for (int t = 0; t < num_timesteps && !timed_out; t++)
         {
             float current_time = t * timestep;
-            buffer_index = (buffer_index + 1) % buffer_size;
+            int buffer_index = t % buffer_size;
             int bin_idx = t / timesteps_per_bin;
 
             random_noise.uniform_();
@@ -145,52 +138,30 @@ public:
             membrane_voltages = torch::where(outside_refractory, new_voltages, membrane_voltages);
 
             torch::Tensor spikes_bool = membrane_voltages >= threshold_voltage;
-            // Added
-            torch::Tensor spiking_indices = spikes_bool.nonzero().squeeze(1).to(torch::kInt32);
-            int n_spikes = spiking_indices.size(0);
-            int *spiking_indices_ptr = spiking_indices.data_ptr<int32_t>();
 
-            // for (int bucket_idx = 0; bucket_idx < num_buckets; bucket_idx++)
-            // {
-            //     ring_buffer[bucket_indices_in_buffer[t][bucket_idx]].add_(
-            //         torch::mv(bucketized_weights[bucket_idx], spikes_bool.to(torch::kFloat32)));
-            // }
-            torch::set_num_threads(1);
+            auto spk = spikes_bool.accessor<bool, 1>();
+            spiking.clear();
+            for (int i = 0; i < num_neurons; i++)
+                if (spk[i])
+                    spiking.push_back(i);
 
-#pragma omp parallel for schedule(static) num_threads(pt_num_threads)
-            for (int src = 0; src < num_neurons; src++)
+#pragma omp parallel
             {
-                if (!spikes_bool[src].item<bool>())
-                {
-                    continue;
-                }
+                int num_threads = omp_get_num_threads();
+                int thread_idx = omp_get_thread_num();
+                int start_target = num_neurons * thread_idx / num_threads;
+                int end_target = num_neurons * (thread_idx + 1) / num_threads;
 
-                int start = crow[src];
-                int end = crow[src + 1];
-
-                for (int j = start; j < end; j++)
+                for (int src : spiking)
                 {
-                    int dst_idx = col[j];
-                    int cur_buffer_idx = (buffer_index + d[j]) % buffer_size;
-#pragma omp atomic
-                    ring_buffer[cur_buffer_idx][dst_idx] += w[j];
+                    int *row_start = col.data() + crow[src];
+                    int *row_end = col.data() + crow[src + 1];
+                    int first = std::lower_bound(row_start, row_end, start_target) - col.data();
+                    int last = std::lower_bound(row_start, row_end, end_target) - col.data();
+                    for (int j = first; j < last; j++)
+                        ring[(t + d[j]) % buffer_size][col[j]] += w[j];
                 }
             }
-            // #pragma omp parallel for schedule(static) num_threads(pt_num_threads)
-            //             for (int i = 0; i < n_spikes; i++)
-            //             {
-            //                 int spiking_index = spiking_indices_ptr[i];
-            //                 int start = crow[spiking_index];
-            //                 int end = crow[spiking_index + 1];
-            //                 for (int j = start; j < end; j++)
-            //                 {
-            //                     int target_idx = col[j];
-            //                     int cur_buffer_idx = (buffer_index + d[j]) % buffer_size; // TODO: target_idx instead of j here?
-            //                     ring_buffer[cur_buffer_idx][target_idx] += w[j];
-            //                 }
-            //             }
-
-            torch::set_num_threads(pt_num_threads);
 
             ring_buffer[buffer_index].zero_();
             membrane_voltages = torch::where(spikes_bool, resting_voltage, membrane_voltages);

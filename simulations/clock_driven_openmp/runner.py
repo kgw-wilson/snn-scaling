@@ -13,7 +13,7 @@ from simulations.clock_driven_openmp.backend import (
 
 
 def clock_driven_openmp(sim_config: SimulationConfig, seed: int) -> None:
-    """Run clock-driven SNN simulation on CPU using dense graph for weights"""
+    """Run clock-driven SNN simulation on CPU, propagating spikes over a CSR graph with OpenMP threads"""
 
     torch.manual_seed(seed)
 
@@ -21,6 +21,8 @@ def clock_driven_openmp(sim_config: SimulationConfig, seed: int) -> None:
     delays = torch.empty_like(weights.values())
     delays.uniform_(sim_config.min_delay, sim_config.max_delay)
     timestep_delays = torch.floor(delays / sim_config.timestep).to(torch.int32)
+    if timestep_delays.min() < 1:
+        raise ValueError("synaptic delays must be at least one timestep")
 
     ring_buffer, buffer_size = create_ring_buffer(sim_config)
 
