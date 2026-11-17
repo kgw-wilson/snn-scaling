@@ -102,12 +102,10 @@ public:
                { timed_out = 1; });
         alarm(max_runtime);
 
-        int buffer_index = 0;
-
         for (int t = 0; t < num_timesteps && !timed_out; t++)
         {
             float current_time = t * timestep;
-            buffer_index = (buffer_index + 1) % buffer_size;
+            int buffer_index = t % buffer_size;
             int bin_idx = t / timesteps_per_bin;
 
             random_noise.uniform_();
