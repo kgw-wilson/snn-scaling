@@ -5,6 +5,8 @@ from shared.simulation_config import SimulationConfig
 import csv
 from pathlib import Path
 
+_RESULTS_PATH = Path("results.csv")
+
 
 def report_statistics(
     sim_config: SimulationConfig,
@@ -23,7 +25,6 @@ def report_statistics(
         spikes_per_neuron: int tensor of shape [num_neurons] with spike counts per neuron
         spikes_per_bin: int tensor of shape [num_bins] with spike counts per time bin
     """
-    results_path = Path("results.csv")
 
     row = {
         "func_name": func_name,
@@ -38,14 +39,13 @@ def report_statistics(
         "mean_spikes_per_bin": spikes_per_bin.float().mean().item(),
     }
 
-    write_header = not results_path.exists()
+    write_header = not _RESULTS_PATH.exists()
 
-    with open(results_path, "a", newline="") as f:
+    with open(_RESULTS_PATH, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=row.keys())
         if write_header:
             writer.writeheader()
         writer.writerow(row)
-
 
 
 def create_spike_reporting_tensors(
