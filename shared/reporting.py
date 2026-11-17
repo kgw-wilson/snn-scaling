@@ -5,7 +5,7 @@ import torch
 
 from shared.simulation_config import SimulationConfig
 
-_RESULTS_PATH = Path("results.csv")
+RESULTS_PATH = Path("results.csv")
 
 
 def report_statistics(
@@ -38,9 +38,9 @@ def report_statistics(
         "mean_spikes_per_bin": spikes_per_bin.float().mean().item(),
     }
 
-    write_header = not _RESULTS_PATH.exists()
+    write_header = not RESULTS_PATH.exists()
 
-    with open(_RESULTS_PATH, "a", newline="") as f:
+    with open(RESULTS_PATH, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=row.keys())
         if write_header:
             writer.writeheader()
