@@ -1,0 +1,212 @@
+[
+ {
+  "num": 1,
+  "title": "Title",
+  "minutes": 0.5,
+  "body": "- Good morning. I'm Cannon; I build software that has to be correct and fast — most recently test and data tooling at CACI, before that an M.S. in CS at UW–Madison with an HPC focus.\n- This talk is a personal project: the same simulation run three different ways, measured on CPU and GPU.\n- I'll keep the neuroscience to a minimum — the core of it is a recursive filter, a sparse matrix, and a priority queue."
+ },
+ {
+  "num": 2,
+  "title": "Question",
+  "minutes": 2,
+  "body": "- Same network, same parameters; only the execution strategy and device change.\n- Clock-driven: advance every neuron every time step — like sampling every channel at a fixed rate. Dense stores every possible connection; sparse stores only real ones (CSR).\n- Event-driven: only do work when a spike arrives, scheduled in a priority queue.\n- Two questions: where are the crossovers, and can I predict them from the primitive — dense GEMV, sparse SpMV, heap operations.\n- If asked \"why does anyone care\": choosing a simulator today is mostly folklore; I wanted a cost model I could check against measurements."
+ },
+ {
+  "num": 3,
+  "title": "Preview",
+  "minutes": 1.5,
+  "body": "- Here's the answer before the details. Each cell is the fastest backend for one network size and connection probability.\n- Small networks: event-driven wins by orders of magnitude, because clock-driven pays a fixed cost every step even when nothing happens.\n- Large networks: the GPU wins everywhere; sparse up to p = 0.5, dense above that.\n- The cost models get the shapes right; the exact crossover depends on hardware constants I'll show later.\n- Caveat to say out loud: one run per cell, single machine. These are first measurements, not a survey.\n- If asked \"what's the blank cell\": at N = 10, p = 0.01 nothing spikes and there's no event-driven row in the log."
+ },
+ {
+  "num": 4,
+  "title": "LIF as a one-pole filter",
+  "minutes": 2,
+  "body": "- If you remember one thing about the neuron: it's a one-pole IIR low-pass filter with a comparator on the output.\n- Input is a sum of weighted spikes; the state decays by alpha each step, alpha = e^(−dt/tau). That's the exact discrete-time solution of the RC circuit, not an Euler approximation.\n- When the voltage crosses threshold it emits a spike, resets, and holds for a refractory period. That's the only nonlinearity.\n- Tau = 10 ms gives a cutoff around 16 Hz — it smooths the input spike train.\n- If asked \"why exact instead of Euler\": with a constant input between steps the exponential is the closed form; it costs the same and removes a stability limit on dt."
+ },
+ {
+  "num": 5,
+  "title": "Two-pole model [CUT IF LONG]",
+  "minutes": 1.5,
+  "body": "- The benchmark sweep used a slightly richer neuron: the input first goes through a synaptic-current filter, then the membrane filter. Two cascaded one-pole low-pass filters.\n- Poles at 0.82 and 0.90 for a 1 ms step. The (1 − alpha) term gives unity DC gain.\n- I want to be upfront: the big April sweep used this model, and later I moved the dense backend to the simpler one-pole model to match Brian2 exactly. I'll be clear about which results use which.\n- If asked \"does the model change the performance results\": the per-step work is the same element-wise ops plus one extra multiply-add per neuron; the dominant costs — mat-vec, SpMV, heap — don't change."
+ },
+ {
+  "num": 6,
+  "title": "Network",
+  "minutes": 2,
+  "body": "- The network is a random directed graph: every possible edge exists independently with probability p, and each edge gets its own delay, uniform between 2 and 4 ms.\n- External drive is Poisson spike input — think of it as a noise floor that keeps neurons near threshold.\n- Two configurations, and I'm keeping them separate on purpose. Left: the big benchmark sweep, all-excitatory, 1 ms step. Right: a Brunel-2000-style excitatory/inhibitory network I used to validate against Brian2, at 0.1 ms.\n- The 20 ms refractory period in the sweep caps firing at 50 Hz — at large N neurons run near that cap (about 48 Hz). That makes spike counts nearly constant across p, which matters for reading the event-driven results.\n- If asked \"why exact edge counts\": it removes edge-count variance between backends so runtime differences aren't graph noise."
+ },
+ {
+  "num": 7,
+  "title": "Clock vs event",
+  "minutes": 1.5,
+  "body": "- Clock-driven: every neuron, every step. Cost scales with steps times neurons, whether or not anything happens. Fixed-rate sampling.\n- Event-driven: keep a queue of future spike arrivals; pop the earliest, update only that neuron. Because each neuron is updated at irregular times, the decay factor is computed per event with its own dt.\n- The trade: clock-driven has regular, vectorizable work — great for GPUs. Event-driven skips idle time but does irregular, pointer-chasing work that's hard to parallelize.\n- If asked about accuracy: event-driven has no time grid, so spike times are not rounded to dt; clock-driven rounds delays and spike times to the step."
+ },
+ {
+  "num": 8,
+  "title": "Primitives",
+  "minutes": 2,
+  "body": "- Strip away the neuroscience and each backend is one primitive.\n- Dense: one N×N weight matrix per delay bucket, multiplied by the 0/1 spike vector every step — a batched GEMV. Same work at p = 0.01 as at p = 1.\n- Sparse: the same, but each bucket is a CSR matrix, so work scales with the number of stored edges. Note it still multiplies the full spike vector — it exploits sparse connectivity, not sparse activity.\n- Event-driven: a binary heap. Each spike pushes N·p future arrivals; each arrival is a pop plus a neuron update.\n- If asked \"why not skip non-spiking columns in the dense case\": you could gather the spiking columns first; at 25–48 Hz with 1 ms steps only 2–5% of neurons spike per step, so that's a real optimization I didn't try."
+ },
+ {
+  "num": 9,
+  "title": "Cost models",
+  "minutes": 2.5,
+  "body": "- Dense: steps × buckets × N². No p, no firing rate. Bytes per step are 4·B·N² — 1.2 GB per step at N = 10,000 with 3 buckets.\n- Sparse: proportional to stored edges, N²p. About 12 bytes per edge: a float value plus a 64-bit column index.\n- Event-driven: number of spikes times out-degree times log of the queue length.\n- Clock-driven also has a fixed floor: steps × ops per step × per-op overhead. That floor decides small-N behavior.\n- Three checks from the log: dense GPU dead flat in p; sparse CPU roughly linear in p at large N; event-driven grows faster than p because the firing rate also rose.\n- If asked \"where's log Q\": the per-event cost rises from about 120 to 300 ns as N grows — consistent with a deeper heap and more cache misses, but I haven't separated the two."
+ },
+ {
+  "num": 10,
+  "title": "Architecture",
+  "minutes": 2,
+  "body": "- Python does what Python is good at: the sweep, config validation, building the graph, allocating every tensor up front.\n- The time loop is C++. Each backend is a small C++ class with the same constructor shape and a run() that returns spike counts and a timed-out flag — one interface, so the comparison is fair.\n- Tensors cross the pybind11 boundary by reference; no copies. If you've written MEX files, pybind11 plays the same role as the mexFunction gateway.\n- Timing wraps only run(), with a CUDA synchronize on both sides, so setup cost isn't counted.\n- If asked \"why move to C++\": in the Python-loop version, interpreter overhead per step was a measurable part of runtime; moving the loop removed that confound across backends."
+ },
+ {
+  "num": 11,
+  "title": "Per-step data flow",
+  "minutes": 2,
+  "body": "- Five stages per step. Draw the Poisson drive, run the two filters, threshold, propagate through the weights into the ring buffer, then reset and record.\n- Stage 4 is the matrix work; everything else is element-wise over N neurons.\n- I counted roughly 24 tensor ops per step. On a GPU each is a kernel launch — keep that number in mind for the dense-GPU results.\n- The dense loop never copies to the host or calls .item() — spike counters live on the device and are read once at the end. That's the \"keep data on the device\" rule.\n- If asked \"what about the sparse loop\": it indexes the ring buffer with a 0-dim device tensor; I believe libtorch turns that into an .item() call, meaning a device sync three times per step. That's a hypothesis I'd check with Nsight Systems."
+ },
+ {
+  "num": 12,
+  "title": "Delay buckets and ring buffer (key slide)",
+  "minutes": 2.5,
+  "body": "- This is the key data structure. Delays are continuous, but a clock-driven sim can only deliver on step boundaries, so I quantize each delay to whole steps and group synapses into buckets — one weight matrix per bucket.\n- Each step: multiply each bucket's matrix by the spike vector and add the result into a ring buffer slot that many steps in the future. Read the current slot, zero it, advance. No queue, no sorting — just a circular buffer of future inputs, like a tapped delay line.\n- Two honest findings from re-reading the code for this talk. One: with delays uniform on [2, 4) ms, the third bucket is always empty, so a third of the dense mat-vec work is multiplying zeros. Two: the read pointer advanced before the read, so contributions arrived one step early — effective delays of 1–2 ms instead of 2–3 in the April sweep. Dense and sparse both had it; the old OpenMP version did not.\n- I've fixed the second one: the read slot is now simply t mod B. A one-spike test — one synapse, known delay — failed before the fix and now arrives on exactly step k at both 1 ms and 0.1 ms.\n- Neither changes the scaling story. The lesson is that a unit test on a single known spike would have caught it on day one.\n- If asked \"how big can the buffer get\": slots = max delay / dt + 1 — 41 slots at dt = 0.1 ms. It's O(N) per slot, tiny next to the weights."
+ },
+ {
+  "num": 13,
+  "title": "Event-driven loop [CUT IF LONG]",
+  "minutes": 1.5,
+  "body": "- The whole event-driven engine is a std::priority_queue of 16-byte Event structs, ordered by time.\n- Pop the earliest, advance just that neuron using its own elapsed time, check threshold. A spike pushes one event per outgoing edge at t plus that edge's delay.\n- Poisson inputs are events too: each one schedules the next arrival with an exponential inter-arrival time — that's an exact Poisson process, not a per-step coin flip.\n- Dividing runtime by spike deliveries gives about 120–300 ns per delivery, rising with N — a bigger heap and more cache misses.\n- If asked \"why float time\": float32 has about 60 ns resolution at t = 1 s, fine for 1 s runs; for longer runs I'd use double or integer ticks."
+ },
+ {
+  "num": 14,
+  "title": "Engineering details",
+  "minutes": 1.5,
+  "body": "- Five habits. Allocate everything before the loop and update in place. Pass tensors by handle, never copy. Seed deterministically. Bound every run. Time only the part you mean to time.\n- The timeout is a classic signal pattern: SIGALRM sets a sig_atomic_t flag and the loop checks it — no threads, no exceptions across the C++/Python boundary.\n- Honest note: the April sweep's seeds came from Python's built-in hash, which is randomized per process, so those exact graphs can't be regenerated. I switched to a blake2b hash afterward.\n- If asked \"what happens to timed-out runs\": they're dropped, which is why some event-driven points at N = 10,000 are missing. Better practice is to record them as censored at 300 s; that's on the list."
+ },
+ {
+  "num": 15,
+  "title": "Cross-backend validation",
+  "minutes": 1.5,
+  "body": "- First check: do my own backends agree? Same parameters, different code paths — dense versus sparse, CPU versus GPU.\n- The four clock-driven backends agree within 1.3% on mean spike count at every point with N ≥ 1,000. They use different seeds, so that includes graph-to-graph variation.\n- Event-driven is consistently lower, 4 to 7%. Consistent and one-sided means a systematic modeling difference, not noise — next two slides.\n- Caveat: mean rate is a coarse statistic. Next steps are rate distributions and a single-neuron test against the closed form.\n- If asked \"why not compare spike trains\": different seeds and float rounding make spike-by-spike comparison meaningless; statistics are the right level."
+ },
+ {
+  "num": 16,
+  "title": "Brian2 reference",
+  "minutes": 1.5,
+  "body": "- Second check: an independent simulator. Brian2 is a widely used Python SNN simulator. I matched its model and parameters to the classic Brunel 2000 network.\n- Mean rates agree within 1.6 to 2.7%. At p = 0.3 the difference is inside the spread across seeds; at the lower p values it's small but outside it, so there's still a systematic piece I haven't pinned down.\n- Brian2 was about 20 times faster on this setup. My dense backend multiplies 21 bucket matrices every step at dt = 0.1 ms; Brian2 propagates only actual spikes. That's the same primitive story as the rest of the talk.\n- After I fixed the ring-buffer offset I reran these exact seeds: rates moved by less than 0.2% and the gap stayed at +1.5, +2.4 and −2.5%. So that bug isn't the explanation.\n- If asked about the gap: remaining candidates are exact edge count versus Bernoulli connections, where the inhibitory neurons sit, and floor-versus-round delay quantization."
+ },
+ {
+  "num": 17,
+  "title": "Why event-driven differs [CUT IF LONG]",
+  "minutes": 1,
+  "body": "- Why is event-driven 4 to 7% lower? Event-driven delivers a 3.6 ms delay at 3.6 ms. The clock-driven code floors it to 3 ms, and in the April sweep an indexing offset delivered it at 2. That offset is now fixed.\n- Two other differences: event-driven treats the synaptic current as constant over each interval when it updates the voltage, and the clock-driven input is a coin flip per step rather than a true Poisson process.\n- I haven't separated these yet. The clean experiment is a dt sweep — discretization error should shrink with dt. The offset fix is done and tested; at 0.1 ms it barely moved rates, which is expected because the shift there is only 0.1 ms.\n- If asked \"which do you think dominates\": at 1 ms the offset was a full step out of a 2.5 ms delay, so it could matter there; I won't know until the 1 ms sweep is rerun."
+ },
+ {
+  "num": 18,
+  "title": "MAIN FIGURE",
+  "minutes": 2.5,
+  "body": "- This is the main result. Runtime against connection probability, both axes log, N = 1,000 left and 10,000 right. One simulated second, 1 ms steps.\n- Left: event-driven (red) starts lowest and rises with p — at p = 0.01 it's 45 ms. Dense GPU sits flat at about 0.37 s and takes over from p = 0.1.\n- Right: everything moves up. Dense CPU is about 85–94 s regardless of p. Sparse CPU rises from 2 s to 173 s. Sparse GPU is the fastest up to p = 0.5; dense GPU is flat at 1.92 s and wins above that.\n- Event-driven at N = 10,000 is already 8 s at p = 0.01 and 67 s at 0.05; larger p weren't recorded.\n- Say clearly: one run per point. I'd put confidence intervals on this before publishing anything.\n- If asked \"why does dense CPU at N = 10⁴ wander between 70 and 94 s\": single runs on a shared-memory Xeon — I'd expect run-to-run variance from memory bandwidth contention; repeats would show it."
+ },
+ {
+  "num": 19,
+  "title": "Event-driven crossover",
+  "minutes": 1.5,
+  "body": "- Same data sliced the other way: runtime versus N at p = 0.05.\n- At small N, event-driven is two to three orders of magnitude ahead. Clock-driven backends sit on a floor — a fixed cost per step for launching ops — no matter how little there is to do.\n- At N = 1,000 it still wins at low p. At N = 10,000 it never wins: the number of spike deliveries grows like N squared times p times the firing rate, and each costs 120–300 ns on one core, while the GPU stays near its floor.\n- There's an oddity: dense CPU is slower at N = 100 than at 1,000. I haven't investigated; my guess is thread-pool overhead on tiny matrices. I'd rather show it than hide it.\n- If asked \"would a parallel event-driven backend change this\": yes, potentially — see the backup slide on lookahead parallelism."
+ },
+ {
+  "num": 20,
+  "title": "Dense GPU",
+  "minutes": 2,
+  "body": "- Dense GPU is the most instructive curve because it's flat — p doesn't matter to a dense mat-vec.\n- For N up to 1,000 it takes 0.36 to 0.40 seconds regardless of size: about 0.37 ms per step. With about 24 ops per step, that's roughly 15 microseconds each. The GPU is mostly waiting on launches and dispatch, not computing.\n- At N = 10,000 it's 1.92 s. Each step reads 1.2 GB of weights; divide and you get about 624 GB/s, close to the card's published ~672 GB/s. So at that size it's memory-bandwidth bound — the right kind of bound for a GEMV.\n- Two cheap wins: CUDA Graphs or fusion for the floor, and dropping the always-empty bucket for a third of the bandwidth. Neither is measured yet.\n- If asked \"is 15 µs per launch realistic\": raw launch latency is a few microseconds; libtorch dispatch, the caching allocator and small temporaries add the rest. I'd confirm with Nsight Systems rather than assert it."
+ },
+ {
+  "num": 21,
+  "title": "Sparse GPU [CUT IF LONG]",
+  "minutes": 1.5,
+  "body": "- At N = 10,000 the sparse GPU backend is the fastest thing I built: 0.62 seconds at p = 0.01, 142 times faster than dense CPU and 3.4 times faster than sparse CPU.\n- The byte model says dense and CSR read the same number of bytes only at p = 1, so naively sparse should win everywhere. It loses above p ≈ 0.6 because CSR access is irregular and the sparse loop has a higher fixed floor.\n- On the CPU the crossover is lower, between 0.4 and 0.5.\n- My hypothesis for the higher sparse floor is an implicit device sync from indexing with a device tensor. That's testable in an afternoon with Nsight.\n- If asked \"why int64 indices\": that's PyTorch's default for CSR. Switching to int32 would cut index bytes in half; another cheap experiment."
+ },
+ {
+  "num": 22,
+  "title": "What didn't work",
+  "minutes": 3,
+  "body": "- Two things that didn't work, and I think the reasons matter more than the results.\n- torch.compile: compiling took 24 to 28 minutes per network size. It helped tiny networks — 35 times faster at N = 10 because fusion removes per-op overhead — but at N = 10,000 it was twice as slow as eager. On the GPU it couldn't use CUDA Graphs because I mutate a dynamically indexed slice of the ring buffer, and at N = 100 the compiler crashed. I dropped it and moved the loop to C++.\n- OpenMP: I wrote a push-style backend that scatters each spike's targets into the ring buffer with atomics. It was as slow as the single-threaded event-driven code, so I deleted it. Re-reading it for this talk: setup.py never passed -fopenmp, so it was never parallel. And the inner loop did a libtorch tensor index per synapse — microseconds each. Adding the flag alone wouldn't fix that; it needs raw pointers.\n- Lesson I took: verify the build actually did what you think, and profile before parallelizing.\n- If asked \"how would you do it now\": see backup — pull model over target neurons, no atomics."
+ },
+ {
+  "num": 23,
+  "title": "Limitations and next steps",
+  "minutes": 2,
+  "body": "- I want to be precise about scope. What I measured is wall-clock runtime of the simulation loop. Memory I can compute exactly but didn't measure. Energy was planned — I prototyped it on a MacBook early on, but I have no energy numbers from this hardware.\n- Line to use if someone points at the résumé: \"My résumé lists latency, throughput, memory and energy as the project's axes. What I've measured so far is runtime — throughput falls out of that as events per second. Memory is analytic, and energy instrumentation is the next step.\"\n- No test suite yet, which is how an indexing bug survived. I've fixed the ring-buffer offset this week with a single-spike test; the empty bucket and the stale sparse and event runners are next.\n- SpiNNaker: the runner exists but has only run against a virtual board, never real hardware.\n- Next steps in priority order: tests and the bug fixes, repeats with confidence intervals, the dt sweep, then memory and energy, then performance work — CUDA Graphs, a calendar queue, a correct parallel CPU backend."
+ },
+ {
+  "num": 24,
+  "title": "Takeaways",
+  "minutes": 2,
+  "body": "- Five things I'd bring to array-processing work.\n- A ring buffer of future contributions is the same structure as a circular buffer of sensor blocks or a delay line.\n- Quantizing delays to the sample grid is the integer-versus-fractional-delay problem in time-domain beamforming — and my off-by-one is the kind of bug that only a test on a known delay catches.\n- Small problems drowned in per-step overhead: batch work into blocks big enough to amortize launches, and keep data on the device.\n- Match the primitive to the data's density.\n- And validate against a reference — Brian2 here, a MATLAB reference in a sonar chain — before trusting any speedup.\n- Close: measure, model, validate, and be explicit about what you didn't measure. Thank you."
+ },
+ {
+  "num": 25,
+  "title": "Questions",
+  "minutes": 0,
+  "body": "- Leave this up during Q&A. Backup slides follow: memory math, ring-buffer sizing, full runtime tables, OpenMP redesign, torch.compile numbers, Brian2 parameter matching, parallel event-driven, floating-point reproducibility."
+ },
+ {
+  "num": 26,
+  "title": "Backup: memory",
+  "minutes": 0,
+  "body": "- Dense memory is 4·B·N², and B grows as dt shrinks: 3 buckets at 1 ms, 21 at 0.1 ms. At N = 10,000 and 0.1 ms that's 8.4 GB just for weights.\n- Construction is worse than steady state: building the graph allocates N² int64 permutations and masks.\n- None of this was measured — peak-allocation measurement is on the next-steps list."
+ },
+ {
+  "num": 27,
+  "title": "Backup: ring buffer",
+  "minutes": 0,
+  "body": "- Walk through the indexing if asked. The read index advances before the read, the write uses t plus offset, so arrival is one step early.\n- I found this re-reading the code for the talk and fixed it: the read slot is now t mod B. The single-spike test failed before (arrival at k − 1) and passes after."
+ },
+ {
+  "num": 28,
+  "title": "Backup: runtime table",
+  "minutes": 0,
+  "body": "- Every number behind the main figure. Fastest per column is tinted.\n- Be ready for: why is there a dash — event-driven at N = 10,000, p ≥ 0.1 wasn't recorded.\n- Data-hygiene note if asked: the CSV has a second block labelled dense CPU that can't be dense CPU; I excluded it. The README plot averages it in, so that plot's dense-CPU curve is wrong."
+ },
+ {
+  "num": 29,
+  "title": "Backup: small-N table",
+  "minutes": 0,
+  "body": "- Small networks: clock-driven runtimes are floors — 0.1 to 4 s — while event-driven is microseconds to milliseconds."
+ },
+ {
+  "num": 30,
+  "title": "Backup: OpenMP",
+  "minutes": 0,
+  "body": "- As written, without -fopenmp the pragmas are ignored. Even with the flag, omp atomic on a Tensor expression isn't a scalar update, and every inner iteration goes through libtorch indexing.\n- Redesign: raw pointers, pull model over targets with a transposed graph so no atomics, or per-thread buffers with a reduction."
+ },
+ {
+  "num": 31,
+  "title": "Backup: torch.compile",
+  "minutes": 0,
+  "body": "- Compile helps tiny problems, hurts big ones, and the compile itself costs tens of minutes. On GPU it couldn't use CUDA Graphs because of the in-place zero of a dynamically indexed slice."
+ },
+ {
+  "num": 32,
+  "title": "Backup: Brian2 matching",
+  "minutes": 0,
+  "body": "- Differences that remain: exact versus Bernoulli edge counts, inhibitory neuron placement, and how each rounds delays to the grid. Any of these could explain a 2% rate difference."
+ },
+ {
+  "num": 33,
+  "title": "Backup: parallel event-driven",
+  "minutes": 0,
+  "body": "- The classic answer is conservative synchronization with lookahead equal to the minimum delay. With 2 ms minimum delay and ~120–300 ns per event, each window has plenty of work per thread at N = 10⁴."
+ },
+ {
+  "num": 34,
+  "title": "Backup: FP reproducibility",
+  "minutes": 0,
+  "body": "- Chaotic dynamics plus non-associative float sums means bitwise reproducibility is the wrong target. Statistics are."
+ },
+ {
+  "num": 35,
+  "title": "Backup: provenance",
+  "minutes": 0,
+  "body": "- If someone asks \"could I rerun this\": the Apr 30 sweep corresponds to commit 63ab99a, which still has the ring-buffer offset; HEAD has moved the dense backend to the Brunel model and the other runners need updating."
+ }
+]

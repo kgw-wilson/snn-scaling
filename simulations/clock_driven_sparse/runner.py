@@ -13,7 +13,7 @@ from simulations.clock_driven_sparse.backend import (
 )
 
 
-def clock_driven_sparse(sim_config: SimulationConfig, seed: int):
+def clock_driven_sparse(sim_config: SimulationConfig, seed: int) -> bool:
     """Run clock-driven SNN simulation using sparse csr matrices for weights"""
 
     torch.manual_seed(seed)
@@ -73,3 +73,5 @@ def clock_driven_sparse(sim_config: SimulationConfig, seed: int):
             torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
             torch.tensor(result["spikes_per_bin"], dtype=torch.float32),
         )
+
+    return result["timed_out"]

@@ -12,7 +12,7 @@ from simulations.clock_driven_openmp.backend import (
 )
 
 
-def clock_driven_openmp(sim_config: SimulationConfig, seed: int) -> None:
+def clock_driven_openmp(sim_config: SimulationConfig, seed: int) -> bool:
     """Run clock-driven SNN simulation on CPU, propagating spikes over a CSR graph with OpenMP threads"""
 
     torch.manual_seed(seed)
@@ -72,3 +72,5 @@ def clock_driven_openmp(sim_config: SimulationConfig, seed: int) -> None:
             torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
             torch.tensor(result["spikes_per_bin"], dtype=torch.float32),
         )
+
+    return result["timed_out"]

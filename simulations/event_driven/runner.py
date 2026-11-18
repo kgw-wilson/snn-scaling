@@ -8,7 +8,7 @@ from shared.utils import create_state_variables
 from simulations.event_driven.backend import EventDrivenSimulation as Simulation
 
 
-def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:
+def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> bool:
     """Run an event-driven LIF spiking neural network simulation"""
 
     torch.manual_seed(seed)
@@ -64,3 +64,5 @@ def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> None:
             torch.tensor(result["spikes_per_neuron"], dtype=torch.float32),
             torch.tensor(result["spikes_per_bin"], dtype=torch.float32),
         )
+
+    return result["timed_out"]

@@ -1,11 +1,30 @@
 import csv
+import resource
+import sys
 from pathlib import Path
 
 import torch
 
+from shared.monitoring import run_rss_bytes
 from shared.simulation_config import SimulationConfig
 
 RESULTS_PATH = Path("results.csv")
+
+_baseline_rss_bytes = None
+
+
+def _peak_rss_bytes() -> int:
+    """Peak resident memory of this process so far (ru_maxrss is KB on Linux, bytes on macOS)"""
+
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    return peak if sys.platform == "darwin" else peak * 1024
+
+
+def record_memory_baseline() -> None:
+    """Record this process's peak memory before any simulation work, to compare with later peaks"""
+
+    global _baseline_rss_bytes
+    _baseline_rss_bytes = _peak_rss_bytes()
 
 
 def report_statistics(
@@ -36,6 +55,17 @@ def report_statistics(
         "max_delay": sim_config.max_delay,
         "mean_spikes_per_neuron": spikes_per_neuron.float().mean().item(),
         "mean_spikes_per_bin": spikes_per_bin.float().mean().item(),
+        "baseline_rss_mb": (
+            _baseline_rss_bytes / 1e6 if _baseline_rss_bytes is not None else ""
+        ),
+        "run_start_rss_mb": run_rss_bytes["start"] / 1e6,
+        "run_end_rss_mb": run_rss_bytes["end"] / 1e6,
+        "peak_rss_mb": _peak_rss_bytes() / 1e6,
+        "gpu_peak_mb": (
+            torch.cuda.max_memory_allocated() / 1e6
+            if torch.cuda.is_initialized()
+            else ""
+        ),
     }
 
     write_header = not RESULTS_PATH.exists()

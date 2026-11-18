@@ -1,12 +1,19 @@
 import time
+
+import psutil
 import torch
+
+_process = psutil.Process()
+
+run_rss_bytes = {"start": None, "end": None}
 
 
 class MonitoringWindow:
     """
-    Context manager for measuring runtime and energy/memory consumption of a code block
+    Context manager for measuring the runtime of a code block
 
-    TODO: support intel/nvidia/spinnaker platforms and use CUDA synchronize
+    Also records the process's resident memory just before and just after the
+    block (outside the timed region) in run_rss_bytes.
     """
 
     def __init__(self, name: str):
@@ -15,16 +22,14 @@ class MonitoringWindow:
         self.elapsed_time = None
 
     def __enter__(self):
-        try:
+        if torch.cuda.is_initialized():
             torch.cuda.synchronize()
-        except:
-            pass
+        run_rss_bytes["start"] = _process.memory_info().rss
         self.start_time = time.time()
         return self
 
     def __exit__(self, exc_type, exc_value, traceback):
-        try:
+        if torch.cuda.is_initialized():
             torch.cuda.synchronize()
-        except:
-            pass
         self.elapsed_time = time.time() - self.start_time
+        run_rss_bytes["end"] = _process.memory_info().rss
