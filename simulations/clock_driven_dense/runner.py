@@ -1,16 +1,17 @@
 import torch
-from shared.clock_driven import (
-    build_dense_weights_bucketized_by_delay,
-    create_ring_buffer,
-    create_lookup_tensors,
-)
-from shared.monitoring import MonitoringWindow
-from shared.reporting import report_statistics, create_spike_reporting_tensors
-from shared.simulation_config import SimulationConfig
-from shared.utils import create_state_variables
 from simulations.clock_driven_dense.backend import (
     ClockDrivenDenseSimulation as Simulation,
 )
+
+from shared.clock_driven import (
+    build_dense_weights_bucketized_by_delay,
+    create_lookup_tensors,
+    create_ring_buffer,
+)
+from shared.monitoring import MonitoringWindow
+from shared.reporting import create_spike_reporting_tensors, report_statistics
+from shared.simulation_config import SimulationConfig
+from shared.utils import create_state_variables
 
 
 def clock_driven_dense(sim_config: SimulationConfig, seed: int) -> bool:

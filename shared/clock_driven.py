@@ -1,5 +1,5 @@
-from scipy.sparse import csr_matrix
 import torch
+
 from shared.graph_creation import create_er_dense
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_delays

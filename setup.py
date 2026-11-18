@@ -4,7 +4,7 @@ import sys
 
 import torch
 from setuptools import setup
-from torch.utils.cpp_extension import CppExtension, BuildExtension
+from torch.utils.cpp_extension import BuildExtension, CppExtension
 
 _EXTRA_COMPILE_ARGS = ["-O3", "-march=native"]
 _TORCH_LIB_DIR = os.path.join(os.path.dirname(torch.__file__), "lib")

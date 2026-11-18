@@ -8,7 +8,7 @@ from simulations.run_one import TIMED_OUT_EXIT_CODE
 _CONNECTION_PROBS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0]
 _NUM_NEURONS = [10, 100, 1000, 10000]
 _NUM_REPEATS = 3
-_NUM_THREADS = 7 # i7-9700 has 8 cores, but one is reserved to avoid 
+_NUM_THREADS = 7 # i7-9700 has 8 threads, only 7 are available on vast.ai
 
 _DEVICE_TO_SIMULATIONS = {
     "cpu": [
@@ -30,8 +30,7 @@ if __name__ == "__main__":
     if RESULTS_PATH.exists():
         raise SystemExit(f"{RESULTS_PATH} exists, move it before starting a new run.")
 
-    # (simulation, device, num_neurons) series that timed out; runtime grows with
-    # connection probability, so larger probabilities for that series are skipped
+    # (simulation, device, num_neurons) series that timed out
     timed_out = set()
 
     for device in get_available_devices():

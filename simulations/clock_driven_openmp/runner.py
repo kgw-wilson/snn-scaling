@@ -1,15 +1,16 @@
 import torch
+from simulations.clock_driven_openmp.backend import (
+    ClockDrivenOpenmpSimulation as Simulation,
+)
+
 from shared.clock_driven import (
     create_ring_buffer,
 )
 from shared.graph_creation import create_er_sparse
 from shared.monitoring import MonitoringWindow
-from shared.reporting import report_statistics, create_spike_reporting_tensors
+from shared.reporting import create_spike_reporting_tensors, report_statistics
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
-from simulations.clock_driven_openmp.backend import (
-    ClockDrivenOpenmpSimulation as Simulation,
-)
 
 
 def clock_driven_openmp(sim_config: SimulationConfig, seed: int) -> bool:

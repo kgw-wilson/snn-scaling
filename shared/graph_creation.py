@@ -1,4 +1,5 @@
 import torch
+
 from shared.simulation_config import SimulationConfig
 
 

@@ -1,9 +1,10 @@
-from pyNN.random import RandomDistribution
 import pyNN.spiNNaker as p
+from pyNN.random import RandomDistribution
 from spynnaker.pyNN.models.neuron.builds import IFCurrExpBase
+
 from shared.monitoring import MonitoringWindow
-from shared.simulation_config import SimulationConfig
 from shared.reporting import create_spike_reporting_tensors, report_statistics
+from shared.simulation_config import SimulationConfig
 
 
 def spinnaker(sim_config: SimulationConfig, seed: int):
