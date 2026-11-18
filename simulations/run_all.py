@@ -8,7 +8,7 @@ from simulations.run_one import TIMED_OUT_EXIT_CODE
 _CONNECTION_PROBS = [0.01, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.75, 1.0]
 _NUM_NEURONS = [10, 100, 1000, 10000]
 _NUM_REPEATS = 3
-_NUM_THREADS = 8
+_NUM_THREADS = 7 # i7-9700 has 8 cores, but one is reserved to avoid 
 
 _DEVICE_TO_SIMULATIONS = {
     "cpu": [
