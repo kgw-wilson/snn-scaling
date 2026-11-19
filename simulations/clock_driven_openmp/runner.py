@@ -8,13 +8,14 @@ from shared.clock_driven import (
 )
 from shared.graph_creation import create_er_sparse
 from shared.monitoring import MonitoringWindow
-from shared.reporting import create_spike_reporting_tensors, report_statistics
+from shared.reporting import create_spike_reporting_tensors, record_memory_baseline, report_statistics
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
 
 
 def clock_driven_openmp(sim_config: SimulationConfig, seed: int) -> bool:
     """Run clock-driven SNN simulation on CPU, propagating spikes over a CSR graph with OpenMP threads"""
+    record_memory_baseline()
 
     torch.manual_seed(seed)
 

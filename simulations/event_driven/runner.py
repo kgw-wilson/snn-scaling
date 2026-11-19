@@ -3,13 +3,14 @@ from simulations.event_driven.backend import EventDrivenSimulation as Simulation
 
 from shared.graph_creation import create_er_sparse
 from shared.monitoring import MonitoringWindow
-from shared.reporting import create_spike_reporting_tensors, report_statistics
+from shared.reporting import create_spike_reporting_tensors, record_memory_baseline, report_statistics
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
 
 
 def event_driven_cpu(sim_config: SimulationConfig, seed: int) -> bool:
     """Run an event-driven LIF spiking neural network simulation"""
+    record_memory_baseline()
 
     torch.manual_seed(seed)
 

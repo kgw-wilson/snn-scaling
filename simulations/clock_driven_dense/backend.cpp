@@ -121,7 +121,8 @@ public:
             membrane_voltages = torch::where(outside_refractory, new_voltages, membrane_voltages);
 
             torch::Tensor spikes_bool = membrane_voltages >= threshold_voltage;
-
+            
+            // There might be a bug here, order might need to be torch.matmul(spikes, bucketized_weights)
             ring_buffer.index_add_(
                 0,
                 bucket_indices_in_buffer[t],

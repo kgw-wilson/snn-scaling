@@ -9,13 +9,14 @@ from shared.clock_driven import (
     create_ring_buffer,
 )
 from shared.monitoring import MonitoringWindow
-from shared.reporting import create_spike_reporting_tensors, report_statistics
+from shared.reporting import create_spike_reporting_tensors, record_memory_baseline, report_statistics
 from shared.simulation_config import SimulationConfig
 from shared.utils import create_state_variables
 
 
 def clock_driven_sparse(sim_config: SimulationConfig, seed: int) -> bool:
     """Run clock-driven SNN simulation using sparse csr matrices for weights"""
+    record_memory_baseline()
 
     torch.manual_seed(seed)
 
