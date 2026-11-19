@@ -73,8 +73,6 @@ def build_sim_config(
 
 
 if __name__ == "__main__":
-    record_memory_baseline()
-
     simulation, device, num_neurons, connection_prob, repeat, num_threads = sys.argv[1:]
     num_neurons = int(num_neurons)
     connection_prob = float(connection_prob)
